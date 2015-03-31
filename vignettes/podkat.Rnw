@@ -1,0 +1,2638 @@
+\documentclass[article]{bioinf}
+
+\usepackage{bm}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{color,colortbl}
+\usepackage{hyperref}
+
+\hypersetup{colorlinks=false,
+   pdfborder=0 0 0,
+   pdftitle={PODKAT - An R Package for Association Testing Involving
+     Rare and Private Variants}
+   pdfauthor={Ulrich Bodenhofer}}
+
+\title{{\Huge PODKAT}\\[5mm]
+   An R Package for Association Testing Involving Rare and Private Variants}
+\author{Ulrich Bodenhofer}
+\affiliation{Institute of Bioinformatics, Johannes Kepler University
+Linz\\Altenberger Str. 69, 4040 Linz, Austria\\
+\email{podkat@bioinf.jku.at}}
+
+\newcommand{\PODKAT}{PODKAT}
+\newcommand{\SKAT}{SKAT}
+\newcommand{\podkat}{\texttt{podkat}}
+\newcommand{\R}{R}
+\newcommand{\TM}{\textsuperscript{\tiny TM}}
+\newcommand{\RTM}{\textsuperscript{\textcircled{\tiny R}}}
+
+\renewcommand{\vec}[1]{\mathbf{#1}}
+\newcommand{\Mat}[1]{\mathbf{#1}}
+\newcommand{\logit}{\mathrm{logit}}
+
+\newcommand{\Real}{\mathbb{R}}
+\newcommand{\Natural}{\mathbb{N}}
+\newcommand{\MAF}{\mathrm{MAF}}
+
+\newcommand{\gO}{\cellcolor{bioli}1}
+\newcommand{\gF}{\cellcolor{bioli}4}
+
+\DeclareFontShape{OT1}{cmtt}{bx}{n}%
+{<5><6><7><8><9><10><10.95><12><14.4><17.28><20.74><24.88>cmttb10}{}
+
+\newcommand{\ttbf}{\fontencoding{OT1}\fontfamily{cmtt}%
+\fontseries{bx}\selectfont}
+
+
+%\VignetteIndexEntry{PODKAT - An R Package for Association Testing Involving Rare and Private Variants}
+%\VignetteDepends{methods, stats, graphics, utils, TxDb.Hsapiens.UCSC.hg38.knownGene, GWASTools, BSgenome.Hsapiens.UCSC.hg38.masked, BSgenome.Mmusculus.UCSC.mm10.masked}
+%\VignetteEngine{knitr::knitr}
+
+\setlength{\fboxrule}{1.5pt}
+
+\newcommand{\notebox}[1]{%
+\begin{center}
+\fcolorbox{bioaz}{biowh}{\begin{minipage}{\Nboxwidth}
+\noindent{\sffamily\bfseries Note:} #1
+\end{minipage}}
+\end{center}}
+
+\begin{document}
+<<LoadPackageToDetermineVersion,echo=FALSE,message=FALSE,results='hide'>>=
+options(width=65)
+set.seed(0)
+library(podkat)
+podkatVersion <- packageDescription("podkat")$Version
+podkatDateRaw <- packageDescription("podkat")$Date
+podkatDateYear <- as.numeric(substr(podkatDateRaw, 1, 4))
+podkatDateMonth <- as.numeric(substr(podkatDateRaw, 6, 7))
+podkatDateDay <- as.numeric(substr(podkatDateRaw, 9, 10))
+podkatDate <- paste(month.name[podkatDateMonth], " ",
+                     podkatDateDay, ", ",
+                     podkatDateYear, sep="")
+@
+\newcommand{\PODKATVer}{\Sexpr{podkatVersion}}
+\newcommand{\PODKATDate}{\Sexpr{podkatDate}}
+\manualtitlepage[Version \PODKATVer, \PODKATDate]
+
+\section*{Scope and Purpose of this Document}
+
+This document is a user manual for \PODKAT, an \R\ package implementing
+non-burden association tests for rare and private variants, most importantly,
+the {\em position-dependent kernel association test (PODKAT)}.
+It provides a gentle introduction into how to use \PODKAT. Not all features
+of the \R\ package are described in full detail. Such details can be obtained
+from the documentation enclosed in the  \R\ package. Further note
+the following: (1) this is not an introduction to statistical genetics or
+association testing; (2) this is not an introduction to \R\ or any
+of the Bioconductor packages used in this document; (3) this is
+not an introduction to statistical hypothesis testing or probability theory.
+If you lack the background for understanding this manual, you
+first have to read introductory literature on the subjects mentioned above.
+
+All \R\ code in this document is written to be runnable by any user.
+However, some of the code chunks require the download of external files,
+require an Internet connection, or require too much computation time to
+be runnable when the package is built, checked, or installed. The output lines
+of \R\ code chunks that are not actually executed when processing this document
+are marked with `\verb+##!!##+' and,
+in case that the user needs to perform extra steps to execute
+the code, these steps are listed explicitly.
+
+\clearpage
+
+\newlength{\auxparskip}
+\setlength{\auxparskip}{\parskip}
+\setlength{\parskip}{0pt}
+\tableofcontents
+\clearpage
+\setlength{\parskip}{\auxparskip}
+
+\newlength{\Nboxwidth}
+\setlength{\Nboxwidth}{\textwidth}
+\addtolength{\Nboxwidth}{-2\fboxrule}
+\addtolength{\Nboxwidth}{-2\fboxsep}
+
+\section{Introduction}
+
+This user manual describes the \R\ package \PODKAT. This
+\R\ package implements non-burden association tests for rare and
+private variants, most importantly, the {\em position-dependent kernel
+association test (PODKAT)}.
+
+Before discussing details of how to use the package, let us first discuss the
+general aim and setup of association studies. Suppose we have a certain number
+of {\em samples} (study participants, patients, etc.) for each of which
+we can measure/sequence the {\em genotype} and for each of which we know/have
+measured/have observed a certain {\em trait} that we want to study. This trait
+may be {\em continuous}, i.e.\ real-valued on a continuous scale (for instance,
+age, height, body mass index, etc.), or {\em categorical}, i.e.\ from a discrete
+set of categories (for instance, case vs.\ control, treatment outcome,
+disease type, etc.). In the following, we will only consider continuous
+traits and categorical traits with two categories
+and refer to this case as a {\em binary trait} (sometimes called
+{\em dichotomous trait} as well) with values 0 or 1.
+
+The goal of association testing is to find out whether there are any
+{\em  statistically significant associations between the genotype and the
+trait}.
+
+In some studies, additional information about the samples' phenotypes or
+environmental conditions is available
+that might also have an influence on the trait (for instance, age, sex,
+ethnicity, family status, etc.). Such additional features can be treated
+as {\em covariates}. More specifically, it is rather common to train a model
+that predicts the trait from the covariates first. Then the association
+between the genotype and those components of the traits is studied which
+have not been sufficiently explained by the covariates. In the case of \PODKAT,
+this is done by a {\em kernel-based variance-component score test}
+\cite{Lin97,WuLeeCaiLiBoehnkeLin11}.
+
+Assume that, for a given set of samples, we are given a trait vector (one entry
+for each sample), genotypes of all samples (in matrix format or as a VCF
+file\footnote{Variant Call Format; see
+\url{http://www.1000genomes.org/wiki/analysis/variant-call-format/vcf-variant-call-format-version-42}
+for a detailed specification of this file format}),
+and a matrix of covariates (if any). Then an association test using \PODKAT\
+consists of the following basic steps:
+\begin{description}
+\item[Training of null model:] pre-processing of trait vector and covariates
+  (if any) for later use in an association test
+  (see Section~\ref{sec:nullModel});
+\item[Selection of regions of interest:] specification of one or more genomic
+  regions for which association tests should be performed
+  (see Section~\ref{sec:regInterest});
+\item[Association testing:] testing of association between genotype and
+  trait/null model for each selected region of interest
+  (see Section~\ref{sec:assocTest});
+\item[Analysis of results:] post-processing (such as, multiple testing
+  correction or filtering) and visualization of results
+  (see Section~\ref{sec:analysis});
+\end{description}
+Figure~\ref{fig:workflow} shows a graphical overview of these basic steps
+along with dependencies and data types.
+\begin{figure}[p]
+\centerline{\includegraphics[width=\textwidth]{PODKAT_workflow}}
+\caption{Overview of the basic steps of the data analysis pipeline offered
+by \PODKAT\ for analyzing associations between traits and genotypes.}
+\label{fig:workflow}
+\end{figure}
+
+This manual is organized as follows: after some basic instructions how to
+install the package (Section~\ref{sec:install}), Section~\ref{sec:impatient}
+provides a simple, yet complete, example that illustrates the general workflow.
+Sections~\ref{sec:nullModel}--\ref{sec:analysis} provide more details about
+the steps necessary to perform association tests with \PODKAT.
+Sections~\ref{sec:misc}--\ref{sec:cite} provide miscellaneous additional
+information.
+
+\section{Installation}\label{sec:install}
+
+The \PODKAT\ \R\ package (current version: \PODKATVer) is
+available via Bioconductor. The simplest way to install the package
+is the following:
+<<InstallPODKAT,eval=FALSE>>=
+source("http://www.bioconductor.org/biocLite.R")
+biocLite("podkat")
+@
+
+If you wish to install the package manually instead, you can download
+the package archive that fits best to your computer system
+from the Bioconductor homepage.
+
+To test the installation of the \PODKAT\ package, enter
+<<LoadPODKAT,eval=FALSE>>=
+library(podkat)
+@
+\noindent in your \R\ session. If this command terminates without any error
+message or warning, you can be sure that the \PODKAT\ package has
+been installed successfully. If so, the \PODKAT\ package is ready
+for use now and you can start performing association tests.
+
+\section{\PODKAT\ for the Impatient}\label{sec:impatient}
+
+In order to illustrate the basic workflow, this section presents two simple
+examples without going into the details of each step. Let us first retrieve
+the file names of the example files that are supplied as part of the \PODKAT\
+package:
+<<SimpleExFileNames>>=
+phenoFileLin <- system.file("examples/example1lin.csv", package="podkat")
+phenoFileLog <- system.file("examples/example1log.csv", package="podkat")
+vcfFile <- system.file("examples/example1.vcf.gz", package="podkat")
+@
+Now let us train the null model for the continuous trait contained in
+the file \verb+example1lin.csv+:
+<<SimpleExNullModelLin>>=
+pheno.c <- read.table(phenoFileLin, header=TRUE, sep=",")
+model.c <- nullModel(y ~ ., pheno.c)
+model.c
+@
+The examples are based on the small artificial genome \verb+hgA+ that is also
+supplied as part of \PODKAT. So we load it first and then partition it into
+overlapping windows:
+<<SimpleExLoadHgA>>=
+data(hgA)
+hgA
+windows <- partitionRegions(hgA)
+windows
+@
+The VCF file used for these two examples is small enough to be loadable
+at once:
+<<SimpleExLoadVCF>>=
+geno <- readGenotypeMatrix(vcfFile)
+geno
+@
+Now we can already perform the two association tests. Let us start with the
+continuous trait:
+<<SimpleExAssocTestLin>>=
+res.c <- assocTest(geno, model.c, windows)
+print(res.c)
+@
+Now we perform multiple testing correction:
+<<SimpleExPAdjLin>>=
+res.c <- p.adjust(res.c)
+print(res.c)
+@
+Finally, we create a Manhattan plot:
+\begin{center}
+<<SimpleExManhLin,fig.width=9,fig.height=4.5,out.width='\\textwidth'>>=
+plot(res.c, which="p.value.adj")
+@
+\end{center}
+
+For a binary trait, the whole pipeline looks the same. The \verb+nullModel()+
+function automatically detects that the trait is binary and this information
+is passed on to the subsequent steps without the need of making additional
+settings:
+<<SimpleExNullModelLog>>=
+pheno.b <- read.table(phenoFileLog, header=TRUE, sep=",")
+model.b <- nullModel(y ~ ., pheno.b)
+model.b
+@
+Now we can already perform the association tests for the binary trait. This
+time, however, we do not load the entire genotype first, but we let
+\verb+assocTest()+ read from the VCF file directly (which is only done piece
+by piece in order to avoid excessive use of memory):
+<<SimpleExAssocTestLog>>=
+res.b <- assocTest(vcfFile, model.b, windows)
+print(res.b)
+@
+Multiple testing correction again:
+<<SimpleExPAdjLog>>=
+res.b <- p.adjust(res.b)
+print(res.b)
+@
+Finally, we create a Manhattan plot:
+\begin{center}
+<<SimpleExManhLog,fig.width=9,fig.height=4.5,out.width='\\textwidth'>>=
+plot(res.b, which="p.value.adj")
+@
+\end{center}
+The following sections provide details and more background information about
+the functions used in the above steps.
+
+\section{Training a Null Model}\label{sec:nullModel}
+
+Before an association test can be performed, we have to pre-process the
+trait vector and create a so-called {\em null model}, i.e.\ a probabilistic
+model of the trait under the null assumption that the trait is independent of
+the genotype and only depends on the covariates (if any). \PODKAT\ currently
+offers three types of such null models:
+\begin{description}
+\item[Linear model:] the trait is continuous and depends linearly on the
+  covariates, i.e.
+  \[
+  y = \alpha_0+\bm{\alpha}^T\cdot\vec{x} + \varepsilon,
+  \]
+  where $y$ is the trait, $\alpha_0$ is the intercept, $\bm{\alpha}$
+  is a weight vector, $\mathbf{x}$ is the vector of covariates, and
+  $\varepsilon$ is normally distributed random noise. If there are no
+  covariates, $y$ is normally distributed around the intercept $\alpha_0$.
+\item[Logistic linear model:] the trait is binary and depends on the covariates
+  in the following way (with the same notations as above):
+  \[
+  \logit\big(p(y=1)\big) = \alpha_0+\bm{\alpha}^T\cdot\vec{x}
+  \]
+  If there are no covariates, $y$ is a binary Bernoulli-distributed random
+  variable with constant $p(y=1)=\logit^{-1}(\alpha_0)=1/(1+\exp(-\alpha_0))$.
+\item[Bernoulli-distributed trait:] the trait is binary, does not depend
+  on any covariates, and follows a simple Bernoulli distribution with constant
+  $p$.
+\end{description}
+
+\PODKAT\ offers one function \verb+nullModel()+ that allows for the
+creation of any of the above three types of null models. In order to demonstrate
+how \verb+nullModel()+ works, we first load two examples that are shipped
+with the \PODKAT\ package.
+
+For the subsequent examples, we consider the two data frames \verb+pheno.c+
+and \verb+pheno.b+ that we created in Section~\ref{sec:impatient} and
+investigate them in more detail.
+The object \verb+pheno.c+ is a data frame with two covariate columns and
+one column \verb+y+ containing a continuous trait:
+<<ShowPhenoExample1>>=
+colnames(pheno.c)
+summary(pheno.c)
+@
+The object \verb+pheno.b+ is a data frame with two covariate columns and
+one column \verb+y+ containing a binary trait.
+<<ShowPhenoExample2>>=
+colnames(pheno.b)
+summary(pheno.b)
+table(pheno.b$y)
+@
+
+As we have seen in Section~\ref{sec:impatient} already, the simplest way
+of creating a null model is to call \verb+nullModel()+ via
+the formula interface, in a way that is largely analogous to the \R\
+standard functions \verb+lm()+ and \verb+glm()+:
+<<TrainModel1>>=
+model.c <- nullModel(y ~ ., pheno.c)
+model.c
+model.b <- nullModel(y ~ ., pheno.b)
+model.b
+@
+
+Note that, in the above calls to \verb+nullModel()+, we did not explicitly
+specify the type of the model. Whenever the \verb+type+ argument is not
+specified, \verb+nullModel()+ tries to guess the right type of model.
+If the trait vector/column is a factor or a numeric vector containing only
+0's and 1's (where both values must be present, otherwise an association test
+would be meaningless), the trait is supposed to be binary and
+a logistic linear model is trained, unless the following conditions are
+satisfied:
+\begin{enumerate}
+\item The number of samples does not exceed 100.
+\item No intercept and no covariates have been specified.
+\end{enumerate}
+If these two conditions are fulfilled for a binary trait,
+\verb+nullModel()+ considers the trait as a Bernoulli-distributed random
+variable (i.e.\ as the third type of model described above). If the trait is
+numeric and not binary, a linear model is trained. If the user wants to enforce
+a specific type of model explicitly, he/she can do so by setting the
+argument \verb+type+ to one of the three choices \verb+"linear"+,
+\verb+"logistic"+, or \verb+"bernoulli"+ (see \verb+?nullModel+ for details).
+
+An example using only the intercept, but no covariates:
+<<TrainModel2>>=
+nullModel(y ~ 1, pheno.c)
+@
+An example in which we want to consider the traits as a Bernoulli-distributed
+variable:
+<<TrainModel3>>=
+nullModel(y ~ 0, pheno.b, type="bernoulli")
+@
+
+Apart from the formula interface used above, \verb+nullModel()+ also allows
+for supplying a covariate matrix as first argument \verb+X+ (optional, omit
+if no covariates should be considered) and a trait
+vector as second argument \verb+y+:
+<<TrainModel4>>=
+covX <- as.matrix(pheno.c[, 1:2])
+traitY <- pheno.c$y
+nullModel(covX, traitY)
+nullModel(y=traitY)
+
+covX <- as.matrix(pheno.b[, 1:2])
+traitY <- pheno.b$y
+nullModel(covX, traitY)
+nullModel(y=traitY)
+nullModel(y=traitY, type="bernoulli")
+@
+In the same way this works for many other \R\ functions, it is also possible
+to attach the data frame with the phenotype data (trait plus covariates) to
+the global environment. Then it is no longer necessary to the pass the
+data frame to the \verb+nullModel()+ function. However, one has to be more
+cautious with the selection of the covariates. The option to simply select
+all covariates with \verb+.+ is no longer available then.
+<<TrainModel5>>=
+attach(pheno.c)
+nullModel(y ~ X.1 + X.2)
+@
+Regardless of the type of model and of which interface has been used
+to call \verb+nullModel()+, the function always creates an \R\ object of class
+\verb+NullModel+ (the objects named \verb+model.c+ and \verb+model.b+ in
+the examples above) that can be used in subsequent association tests.
+<<SilentlyDetach,echo=FALSE,results='hide'>>=
+detach(pheno.c)
+@
+
+Variance-score component tests based on linear logistic models may not
+necessarily determine the null distribution of the test statistic correctly
+\cite{LeeEmondBamshadBarnesRiederNickerson12,Lin97} and, therefore, they may
+not control the type-I error rate correctly. Following a philosophy inspired
+by the \SKAT\ package \cite{LeeEmondBamshadBarnesRiederNickerson12,%
+WuLeeCaiLiBoehnkeLin11} \PODKAT\ offers two means to
+counteract this issue:
+\begin{description}
+\item[Resampling:] under the null assumption that the trait only depends on
+  the covariates (if any) and not on the genotype, a certain number of
+  model residuals are sampled. Then, when association testing is performed,
+  $p$-values are computed also for all these sampled residuals, and an
+  additional estimated $p$-value is computed as the relative frequency of
+  $p$-values of sampled residuals that are at least as significant as
+  the test's $p$-value. The number of sampled residuals is controlled with
+  the \verb+n.resampling+ argument (the default is 0) and the type
+  of sampling procedure is controlled with the \verb+type.resampling+
+  argument (see \verb+?nullModel+ for more details).
+\item[Small sample correction and adjustment of higher moments:]
+  Lee~{\em et~al.}\label{page:sscor}
+  \cite{LeeEmondBamshadBarnesRiederNickerson12} proposed a correction of
+  the null distribution for small samples and a sampling method for adjusting
+  higher moments of the null distribution of the test statistic
+  (see also Subsections~\ref{ssec:teststat} and~\ref{ssec:sscor}).
+  \PODKAT\ implements both corrections (see Subsection~\ref{ssec:sscor}
+  about implementation details).
+  The argument \verb+adj+ controls whether the null model
+  is created such that any of the two corrections can be used later.
+  The default is that the corrections are switched on for samples sizes
+  up to 2,000, while \verb+adj="force"+ always turns corrections on and
+  \verb+adj="none"+ always turns corrections off. The adjustment of higher
+  moments requires sampled null model residuals. The number of those
+  is controlled with the \verb+n.resampling.adj+ argument and the
+  type of sampling procedure is again controlled with the
+  \verb+type.resampling+ argument (see \verb+?nullModel+ and
+  Subsection~\ref{ssec:sscor} for more details).
+\end{description}
+For linear models, there is no need for any correction of the null
+distribution (cf.\ Subsection~\ref{ssec:teststat}). Consequently,
+small sample correction is not available for linear models. Resampling,
+however, is available for linear models, too. None of the two methods is
+available for association tests using a Bernoulli-distributed trait.
+
+Some examples showing how to control resampling and small sample corrections
+for logistic linear models:
+<<TrainModel6>>=
+nullModel(y ~ ., pheno.b, n.resampling=1000, adj="none")
+nullModel(y ~ ., pheno.b, n.resampling.adj=2000)
+@
+
+\section{Selection of Regions of Interest}\label{sec:regInterest}
+
+Association tests with \PODKAT\ typically consider multiple regions of
+interest along the samples' genome. The most common scenarios are whole-genome
+association testing, whole-exome association testing, or association tests for
+specific user-defined regions. In the following, we will highlight the
+basic steps necessary for each of these three scenarios.
+
+\subsection{Regions of Interest for Whole-Genome Association Testing}%
+\label{ssec:regInterestWGS}
+
+Suppose that the samples' genotypes have been determined by whole-genome
+sequencing or any other technology that covers variants across the whole
+genome. The first step for this case is to define the genome and where it
+has been sequenced. \PODKAT\ comes with four ready-made
+\texttt{GRangesList}
+objects (see Bioconductor package \texttt{GenomicRanges}) that define
+these regions for autosomal chromosomes, sex chromosomes, and the mitochondrial
+DNA of the human genome. Those objects are called \verb+hg18Unmasked+,
+\verb+hg19Unmasked+, \verb+hg38Unmasked+, \verb+b36Unmasked+,
+and \verb+b37Unmasked+. The three former are the standard hg18, hg19, and hg38
+builds as shipped with the Bioconductor packages
+\begin{itemize}
+\item \verb+BSgenome.Hsapiens.UCSC.hg18.masked+,
+\item \verb+BSgenome.Hsapiens.UCSC.hg19.masked+, and
+\item \verb+BSgenome.Hsapiens.UCSC.hg38.masked+.
+\end{itemize}
+The two latter are basically the
+same regions as in \verb+hg18Unmasked+ and \verb+hg19Unmasked+, but with
+chromosomes named as in the genomes b36 and b37
+that are frequently used by the Genome Analysis Toolkit (GATK).%
+\footnote{\url{https://www.broadinstitute.org/gatk/}}
+The five objects are available upon \verb+data()+ calls as in the following
+example:
+<<hg38UnmaskedCall>>=
+data(hg38Unmasked)
+hg38Unmasked
+names(hg38Unmasked)
+hg38Unmasked$chr1
+seqinfo(hg38Unmasked)
+@
+All four objects are organized in the same way; they consist of 31 components:
+one for each of the 22 autosomal chromosomes, one for each of the two
+sex chromosomes, one for the mitochondrial DNA, and two for each of the three
+pseudoautosomal regions. This structure has been chosen to allow the user
+to consider different chromosomes and pseudoautosomal regions separately.
+Table~\ref{tab:unmaskedChrs} gives an overview of the list components of each
+of those \verb+GRangesList+ objects, how their list components are named, and
+how they relate to chromosomes in the human genome.
+\begin{table}
+\caption{Overview of how the \texttt{GRangesList} objects
+\texttt{hg18Unmasked}, \texttt{hg19Unmasked}, \texttt{hg38Unmasked},
+\texttt{b36Unmasked}, and
+\texttt{b37Unmasked} are organized: each row corresponds to one
+chromosome/sequence of the human genome and lists the names of those list
+components that contain regions from these chromosomes/sequences.}
+\label{tab:unmaskedChrs}
+\begin{center}\small%
+\begin{tabular}{|c|l|l|l|}
+\hline
+\bf Chromosome & \ttbf hg*Unmasked &
+\ttbf b36Unmasked & \ttbf b37Unmasked \\
+\hline
+\hline
+1 & \texttt{"chr1"} & \texttt{"1"} &  \texttt{"1"} \\
+\vdots & \qquad\vdots & \ \vdots & \ \vdots \\
+22 & \texttt{"chr22"} & \texttt{"22"} &  \texttt{"22"} \\
+\hline
+X & \texttt{"chrX"}, \texttt{"X.PAR1"},  &
+ \texttt{"X"}, \texttt{"X.PAR1"},  &
+ \texttt{"X"}, \texttt{"X.PAR1"},  \\
+ & \texttt{"X.PAR2"}, \texttt{"X.XTR"} & \texttt{"X.PAR2"}, \texttt{"X.XTR"} &
+   \texttt{"X.PAR2"}, \texttt{"X.XTR"} \\
+\hline
+Y & \texttt{"chrY"}, \texttt{"Y.PAR1"},  &
+ \texttt{"Y"}, \texttt{"Y.PAR1"},  &
+ \texttt{"Y"}, \texttt{"Y.PAR1"},  \\
+ & \texttt{"Y.PAR2"}, \texttt{"Y.XTR"} & \texttt{"Y.PAR2"}, \texttt{"Y.XTR"} &
+   \texttt{"Y.PAR2"}, \texttt{"Y.XTR"} \\
+\hline
+mtDNA & \texttt{"chrM"} & \texttt{"M"} & \texttt{"MT"} \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+A simpler structure can be created easily. As an example, the pseudoautosomal
+regions can be re-united with the X and Y chromosomes as follows:
+<<ReUnitePseudoautosomal>>=
+hg38basic <- hg38Unmasked[paste0("chr", 1:22)]
+hg38basic$chrX <- reduce(unlist(hg38Unmasked[c("chrX", "X.PAR1",
+                                               "X.PAR2", "X.XTR")]))
+hg38basic$chrY <- reduce(unlist(hg38Unmasked[c("chrY", "Y.PAR1",
+                                               "Y.PAR2", "Y.XTR")]))
+hg38basic
+names(hg38basic)
+@
+If the user prefers to have all unmasked regions in one single \verb+GRanges+
+object, this can be done as follows:
+<<AllInOneGRanges>>=
+hg38all <- reduce(unlist(hg38Unmasked))
+hg38all
+@
+
+If association testing should be done for any other genome, the user must
+specify unmasked regions as a \verb+GRanges+ or \verb+GRangesList+ object first.
+This can be done manually, but it is more convenient to start from a
+\verb+MaskedBSgenome+ object. Subsection~\ref{ssec:newGenome} provides more
+details.
+
+It makes little sense to perform association tests for whole chromosomes (or
+unmasked regions thereof). The most common approach is to split these
+regions into overlapping windows of (almost) equal lengths. In order to do
+this conveniently, \PODKAT\ provides the function \verb+partitionRegions()+.
+A toy example:
+<<partToy>>=
+gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1, end=140000))
+partitionRegions(gr, width=10000, overlap=0.5)
+partitionRegions(gr, width=15000, overlap=0.8)
+partitionRegions(gr, width=10000, overlap=0)
+@
+Obviously, the \verb+width+ argument controls the width of the windows (the
+default is 5,000) and the \verb+overlap+ argument controls the relative
+overlap (the default is 0.5, which corresponds to 50\%\ overlap). The windows
+are placed such that possible overhangs are balanced at the beginning and
+end of the partitioned region.
+
+The choice of the right window width is crucial. If the windows are too narrow,
+causal regions may be split across multiple windows which may impair
+statistical power and requires more aggressive multiple testing correction.
+However, if the windows are too large, associations may be diluted by
+the large number of variants considered by every single test. We recommend
+a width between 5,000~bp and 50,000~bp along with 50\%\ overlap.
+
+If called for a \verb+GRanges+ object, \verb+partitionRegions()+ returns a
+\verb+GRanges+ object with partitioned regions.
+If called for a \verb+GRangesList+ object, \verb+partitionRegions()+ returns a
+\verb+GRangesList+ object, where each component of the output object corresponds
+to the partitioning of one of the components of the input object.
+<<hg38partAll>>=
+partitionRegions(hg38Unmasked, width=20000)
+@
+
+The \verb+partitionRegions()+ functions also allows for partitioning only a
+subset of chromosomes. This can be done by specifying the \verb+chrs+
+argument, e.g.\ \verb+chrs="chr22"+ only considers regions on chromosome 22
+and omits all other regions. This works both for \verb+GRanges+ and
+\verb+GRangesList+ objects. However, \verb+partitionRegions()+ works for
+any \verb+GRangesList+ object and makes no prior assumption about which
+chromosomes appear in each of the list components. Technically, this means that
+all list components will be searched for regions that lie on the specified
+chromosome(s). The \verb+GRangesList+ objects \verb+hg18Unmasked+,
+\verb+hg19Unmasked+, \verb+hg38Unmasked+, \verb+b36Unmasked+, and
+\verb+b37Unmasked+ included in the \PODKAT\ package, however, are organized
+that all list components
+only contain regions from one chromosome (see Table~\ref{tab:unmaskedChrs}).
+Therefore, it is not necessary to search all list components. The following
+example does this more efficiently by restricting to chromosomes
+21 and 22 from the beginning:
+<<hg38partAll21-22>>=
+partitionRegions(hg38Unmasked[c("chr21", "chr22")], width=20000)
+@
+The following call using the \verb+chrs+ argument would give exactly the same
+result as the command above, but takes approximately 10
+times as much time:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{partitionRegions}\hlstd{(hg38Unmasked,} \hlkwc{chrs}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{"chr21"}\hlstd{,} \hlstr{"chr22"}\hlstd{),} \hlkwc{width}\hlstd{=}\hlnum{20000}\hlstd{)}
+\end{alltt}
+\begin{verbatim}
+##!!## GRangesList object of length 2:
+##!!## $chr21 
+##!!## GRanges object with 3997 ranges and 0 metadata columns:
+##!!##          seqnames               ranges strand
+##!!##             <Rle>            <IRanges>  <Rle>
+##!!##      [1]    chr21   [5010001, 5028123]      *
+##!!##      [2]    chr21   [5018124, 5038123]      *
+##!!##      [3]    chr21   [5028124, 5048123]      *
+##!!##      [4]    chr21   [5038124, 5058123]      *
+##!!##      [5]    chr21   [5048124, 5068123]      *
+##!!##      ...      ...                  ...    ...
+##!!##   [3993]    chr21 [46641223, 46661222]      *
+##!!##   [3994]    chr21 [46651223, 46671222]      *
+##!!##   [3995]    chr21 [46661223, 46681222]      *
+##!!##   [3996]    chr21 [46671223, 46691222]      *
+##!!##   [3997]    chr21 [46681223, 46699983]      *
+##!!## 
+##!!## ...
+##!!## <1 more element>
+##!!## -------
+##!!## seqinfo: 25 sequences (1 circular) from hg38 genome
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\subsection{Regions of Interest for Whole-Exome Association Testing}%
+\label{ssec:regInterestWXS}
+
+Suppose that the samples' genotypes have been determined by whole-exome
+sequencing. In this case, it makes little sense to use a partition of the
+whole genome as regions of interest. Instead, the best way is to use
+exactly those regions that have been targeted by the capturing technology.
+If these regions are available as a BED file%
+\footnote{\url{http://genome.ucsc.edu/FAQ/FAQformat.html\#format1}}, this
+file can be read with the function \verb+readRegionsFromBedFile()+.
+In the following example, we demonstrate this for a BED file that specifies
+the regions targeted by the Illumina\RTM{} TruSeq Exome Enrichment Kit.
+The regions are based on the hg19 human genome build.
+In order to make this code example work, users must first download the file
+from the Illumina\RTM{} website%
+\footnote{\url{http://support.illumina.com/downloads/truseq_exome_targeted_regions_bed_file.ilmn}}:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{readRegionsFromBedFile}\hlstd{(}\hlstr{"truseq_exome_targeted_regions.hg19.bed.chr.gz"}\hlstd{)}
+\end{alltt}
+\begin{verbatim}
+##!!## GRanges object with 201071 ranges and 0 metadata columns:
+##!!##                                  seqnames               ranges
+##!!##                                     <Rle>            <IRanges>
+##!!##          chr1:14363-14829:WASH5P     chr1       [14362, 14829]
+##!!##          chr1:14970-15038:WASH5P     chr1       [14969, 15038]
+##!!##          chr1:15796-15947:WASH5P     chr1       [15795, 15947]
+##!!##          chr1:16607-16765:WASH5P     chr1       [16606, 16765]
+##!!##          chr1:16858-17055:WASH5P     chr1       [16857, 17055]
+##!!##                              ...      ...                  ...
+##!!##   chrY:24457542-24457645:RBMY2FP     chrY [24457541, 24457645]
+##!!##   chrY:24460640-24462350:RBMY2FP     chrY [24460639, 24462350]
+##!!##    chrY:24549623-24549729:RBMY1J     chrY [24549622, 24549729]
+##!!##      chrY:26980008-26980063:DAZ2     chrY [26980007, 26980063]
+##!!##      chrY:26980089-26980276:DAZ3     chrY [26980088, 26980276]
+##!!##                                  strand
+##!!##                                   <Rle>
+##!!##          chr1:14363-14829:WASH5P      *
+##!!##          chr1:14970-15038:WASH5P      *
+##!!##          chr1:15796-15947:WASH5P      *
+##!!##          chr1:16607-16765:WASH5P      *
+##!!##          chr1:16858-17055:WASH5P      *
+##!!##                              ...    ...
+##!!##   chrY:24457542-24457645:RBMY2FP      *
+##!!##   chrY:24460640-24462350:RBMY2FP      *
+##!!##    chrY:24549623-24549729:RBMY1J      *
+##!!##      chrY:26980008-26980063:DAZ2      *
+##!!##      chrY:26980089-26980276:DAZ3      *
+##!!##   -------
+##!!##   seqinfo: 24 sequences from an unspecified genome; no seqlengths
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+Since a BED file does not contain any genomic annotation,
+\verb+readRegionsFromBedFile()+ is not able to set chromosome names and
+chromosome lengths properly. In order to overcome this limitation,
+\verb+readRegionsFromBedFile()+ allows for passing a \verb+Seqinfo+ object
+via the \verb+seqInfo+ argument.
+Then the metadata of the returned object are properly set to those passed
+as \verb+seqInfo+ argument:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{data}\hlstd{(hg19Unmasked)}
+\hlstd{reg} \hlkwb{<-} \hlkwd{readRegionsFromBedFile}\hlstd{(}\hlstr{"truseq_exome_targeted_regions.hg19.bed.chr.gz"}\hlstd{,}
+                              \hlkwc{seqInfo}\hlstd{=}\hlkwd{seqinfo}\hlstd{(hg19Unmasked))}
+\hlkwd{seqinfo}\hlstd{(reg)}
+\end{alltt}
+\begin{verbatim}
+##!!## Seqinfo object with 25 sequences from hg19 genome:
+##!!##   seqnames seqlengths isCircular genome
+##!!##   chr1      249250621       <NA>   hg19
+##!!##   chr2      243199373       <NA>   hg19
+##!!##   chr3      198022430       <NA>   hg19
+##!!##   chr4      191154276       <NA>   hg19
+##!!##   chr5      180915260       <NA>   hg19
+##!!##   ...             ...        ...    ...
+##!!##   chr21      48129895       <NA>   hg19
+##!!##   chr22      51304566       <NA>   hg19
+##!!##   chrX      155270560       <NA>   hg19
+##!!##   chrY       59373566       <NA>   hg19
+##!!##   chrM          16571       <NA>   hg19
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+Locations of transcripts can be used as regions of interest, too:
+<<trExHg38,message=FALSE>>=
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+hg38tr <- transcripts(TxDb.Hsapiens.UCSC.hg38.knownGene, columns="tx_name")
+hg38tr
+@
+The \verb+GRanges+ object returned by \verb+transcripts()+ in the above
+example code includes strand information. This does
+no harm to a subsequent association test, since all \verb+assocTest()+ methods
+ignore all information except the chromosome and the start of the region.
+In any case, the user is advised rather to use exactly those regions that
+were targeted by the biotechnology that was applied. If this information is
+not available, we rather recommend to use transcripts, perhaps extended to
+promotor regions and untranslated regions. Alternatively, to narrow down
+association analysis by removing introns, it is also possible to use
+exons only. This can simply be done by replacing the above call to
+\verb+transcripts()+ by \verb+exons()+.
+
+If regions located on sex chromosomes or in pseudo-autosomal regions should
+be treated differently, the best option is to split the regions object
+first such that the different regions are grouped together. For convenience,
+\PODKAT\ provides a \verb+split()+ method that allows for splitting a
+\verb+GRanges+ object along grouped regions contained in a
+\verb+GRangesList+ object. The following example splits up transcripts (for
+the sake of shorter computation times, we restrict to the X chromosome
+and pseudo-autosomal regions located on the X chromosome):
+<<splitHg38transcripts>>=
+strand(hg38tr) <- "*"
+split(hg38tr, hg38Unmasked[c("chrX", "X.PAR1", "X.PAR2", "X.XTR")])
+@
+The \verb+split()+ function is strand-specific, that is why we have to discard
+the strand information in \verb+hg38tr+ first (whereas \verb+hg38Unmasked+
+does not contain any strand information anyway).
+
+The lengths of exons, transcripts, and captured target sequences vary
+quite a lot. In order to avoid that
+the results of an association test are biased to the lengths of the regions
+of interest, we suggest to partition longer exons or transcripts as well.
+This can be done by simply calling \verb+partitionRegions()+ for
+the \verb+GRanges+ objects containing exons or transcripts (the call to
+\verb+reduce()+ removes duplicates and unifies partial overlaps):
+<<hg38trPart>>=
+partitionRegions(reduce(hg38tr))
+@
+
+\subsection{Defining Custom Regions of Interest}%
+\label{ssec:regInterestCustom}
+
+If a user is not interested in a genome-wide analysis, he/she might want to
+restrict to a particular genomic region, for example, a particular gene or set
+of genes that are likely to be relevant for his/her study.
+In such a case, there are multiple options to define regions of interest.
+The simplest, but also most tedious, approach is to enter the regions
+manually. Let us consider the simple example that we are interested
+in the two human hemoglobin alpha genes HBA1 and HBA2. If we search for
+these genes in the UCSC Genome Browser\footnote{\url{http://genome.ucsc.edu/}}
+\cite{KentSugnetFureyRoskinPringleZahlerHaussler02}, we see that the genes
+are in the following regions (according to the hg38 human genome build):
+<<HBAGenesManual>>=
+hbaGenes <- GRanges(seqnames="chr16",
+                    ranges=IRanges(start=c(176680, 172847),
+                                   end=c(177521, 173710)))
+names(hbaGenes) <- c("HBA1", "HBA2")
+hbaGenes
+@
+Another variant is to use the \verb+TxDb.Hsapiens.UCSC.hg38.knownGene+ package
+to access the genes' locations. In order to do that,
+we have to take into account that the corresponding transcripts have
+the UCSC IDs \verb+uc002cfx.1+ and\verb+uc002cfv.4+ (which
+enable us to select the right regions by searching for these IDs in the
+\verb+tx_name+ metadata column):
+<<HBAGenesManualTxDb>>=
+hbaGenes <- hg38tr[which(mcols(hg38tr)$tx_name %in%
+                         c("uc002cfx.1", "uc002cfv.4"))]
+names(hbaGenes) <- c("HBA1", "HBA2")
+hbaGenes
+@
+The probably most general, most automatic, and most elegant way to
+determine the genes' locations is via direct access to some biological
+database. The Bioconductor package \verb+biomaRt+ facilitates such interfaces.
+However, this interface returns its results as data frames. So, we have
+to convert the data to a \verb+GRanges+ object ourselves. The hemoglobin
+alpha example again, this time using \verb+biomaRt+:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(biomaRt)}
+\hlstd{ensem} \hlkwb{<-} \hlkwd{useMart}\hlstd{(}\hlstr{"ensembl"}\hlstd{)}
+\hlstd{hsEnsem} \hlkwb{<-} \hlkwd{useDataset}\hlstd{(}\hlstr{"hsapiens_gene_ensembl"}\hlstd{,} \hlkwc{mart}\hlstd{=ensem)}
+\hlstd{res} \hlkwb{<-} \hlkwd{getBM}\hlstd{(}\hlkwc{attributes}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{"hgnc_symbol"}\hlstd{,} \hlstr{"chromosome_name"}\hlstd{,}
+                          \hlstr{"start_position"}\hlstd{,} \hlstr{"end_position"}\hlstd{,} \hlstr{"ucsc"}\hlstd{),}
+             \hlkwc{filters}\hlstd{=}\hlstr{"hgnc_symbol"}\hlstd{,} \hlkwc{values}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{"HBA1"}\hlstd{,} \hlstr{"HBA2"}\hlstd{),}
+             \hlkwc{mart}\hlstd{=hsEnsem)}
+\hlstd{res}
+\end{alltt}
+\begin{verbatim}
+##!!##   hgnc_symbol chromosome_name start_position end_position
+##!!## 1        HBA1              16         176680       177522
+##!!## 2        HBA1              16         176680       177522
+##!!## 3        HBA2              16         172847       173710
+##!!## 4        HBA2              16         172847       173710
+##!!##         ucsc
+##!!## 1 uc002cfx.1
+##!!## 2           
+##!!## 3 uc002cfv.4
+##!!## 4
+\end{verbatim}
+\begin{alltt}
+\hlstd{hbaGenes} \hlkwb{<-} \hlkwd{GRanges}\hlstd{(}\hlkwc{seqnames}\hlstd{=}\hlkwd{paste0}\hlstd{(}\hlstr{"chr"}\hlstd{, res}\hlopt{$}\hlstd{chromosome_name),}
+                    \hlkwc{ranges}\hlstd{=}\hlkwd{IRanges}\hlstd{(}\hlkwc{start}\hlstd{=res}\hlopt{$}\hlstd{start_position,}
+                                   \hlkwc{end}\hlstd{=res}\hlopt{$}\hlstd{end_position))}
+\hlkwd{names}\hlstd{(hbaGenes)} \hlkwb{<-} \hlstd{res}\hlopt{$}\hlstd{hgnc_symbol}
+\hlstd{hbaGenes}
+\end{alltt}
+\begin{verbatim}
+##!!## GRanges object with 4 ranges and 0 metadata columns:
+##!!##        seqnames           ranges strand
+##!!##           <Rle>        <IRanges>  <Rle>
+##!!##   HBA1    chr16 [176680, 177522]      *
+##!!##   HBA1    chr16 [176680, 177522]      *
+##!!##   HBA2    chr16 [172847, 173710]      *
+##!!##   HBA2    chr16 [172847, 173710]      *
+##!!##   -------
+##!!##   seqinfo: 1 sequence from an unspecified genome; no seqlengths
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+As already mentioned at the end of Subsection~\ref{ssec:regInterestWXS},
+the lengths of exons and transcripts vary quite a lot. So it is recommended
+to partition even custom-defined regions of interest using
+\verb+partitionRegions()+ if the regions' lengths differ strongly and/or
+if the regions are longer than the window size one would usually employ
+for whole-genome studies.
+
+
+\section{Performing an Association Test}\label{sec:assocTest}
+
+We have already seen in Section~\ref{sec:impatient} that the function for
+performing the actual association tests is \verb+assocTest()+. We have also
+seen that there are basically two ways how to use this function. The simpler
+one is to load the genotype data into a matrix-like object first and to
+perform an association test on this matrix-like object. To first load the
+genotype, the following command can be used:
+<<SimpleEx2LoadVCF>>=
+geno <- readGenotypeMatrix(vcfFile)
+geno
+@
+The object returned by \verb+readGenotypeMatrix()+ is of class
+\verb+GenotypeMatrix+. This class is defined by \PODKAT\ and essentially
+consists of the genotypes in column-oriented sparse matrix format
+(with rows corresponding to samples and columns corresponding to variants)
+along with information about the genomic positions of the variants.
+The \verb+readGenotypeMatrix()+ function has some additional arguments for
+controlling how variants are pre-processed and filtered (see
+\verb+?readGenotypeMatrix+ and Subsection \ref{ssec:readVCF}
+for more details). Information about the genomic
+positions of the variants can be obtained as follows:
+<<vInfo>>=
+variantInfo(geno)
+@
+Obviously, this is a \verb+GRanges+ object that also contains a metadata
+column with minor allele frequencies (MAFs). For convenience, there is a
+separate accessor function \verb+MAF()+ for retrieving these MAFs:
+<<MAFs>>=
+summary(MAF(geno))
+@
+
+The simplest approach is to perform a test for
+the association between the null model the entire genotype:
+<<assocTestWholeGenotype>>=
+assocTest(geno, model.c)
+assocTest(geno, model.b)
+@
+As already mentioned in Section~\ref{sec:regInterest}, it is not necessarily
+the best idea to consider associations between the null model and all variants
+of the whole genome at once. The larger the number of variants is that are
+considered at once, the smaller is the ratio of potentially associated
+variants. Thus, it may become harder for the test to disentangle random
+effects from true associations. Therefore, the better and more common approach
+is to split the genome into a set of (overlapping) windows/regions of interest
+as described in Section~\ref{sec:regInterest} --- hoping that potentially
+causal variants will accumulate in certain regions and, thereby, lead to
+highly significant $p$-values for these regions. If we already have a
+certain set of regions of interest, we can simply pass them to
+\verb+assocTest()+ as third argument:
+<<SimpleExAssocTestLin2>>=
+res.c <- assocTest(geno, model.c, windows)
+print(res.c)
+@
+Obviously, \verb+assocTest()+ performs the association test for each
+region independently and computes a $p$-value for each region.
+
+The \verb+assocTest()+ as used above has a few arguments that influence the
+way the tests are performed. Most importantly, the \verb+kernel+ argument
+allows for choosing among 6 different kernels. Details about these kernels
+are available in Subsection~\ref{ssec:kernels}. We suggest the default
+setting \verb+"linear.podkat"+, i.e.\ the position-dependent linear kernel,
+\PODKAT's most important contribution and achievement. For comparison purposes,
+\PODKAT\ also provides an up-to-date implementation of the SKAT test
+\cite{WuLeeCaiLiBoehnkeLin11} which can be chosen by setting
+\verb+kernel="linear.SKAT"+. The four other kernels have not turned out to
+be advantageous in simulations, moreover, they require much longer computation
+times. Anyway, they are available and ready to be used.
+
+Another important decision is the choice of a weighting schemes, i.e.\
+whether and how to choose weights for variants depending on their minor
+allele frequency (MAF). Details are provided in
+Subsection~\ref{ssec:weightFunc}.
+
+If the genotype matrix is too large to fit into the computer's main memory or
+if parallelization is desired, the alternative, as already mentioned, is to
+call \verb+assocTest()+ for a VCF file name. Then \verb+assocTest()+
+splits the regions of interest into batches and only loads those variants
+from the VCF file at once (see Subsection~\ref{sssec:chunking}).
+If called for a VCF file name (or \verb+TabixFile+
+object), the same arguments for controlling how variants are pre-processed
+and filtered are available as for the \verb+readGenotypeMatrix()+ function
+(see \verb+?assocTest+, \verb+?readGenotypeMatrix+, and
+Subsection~\ref{ssec:readVCF} of this manual for more details).
+This interface also allows for carrying out these
+computations on multiple processor cores and/or on a computing cluster
+(see Subsection~\ref{sssec:parallel}). We first provide a simple example
+here without any parallelization:
+<<SimpleExAssocTestLin3>>=
+res.c <- assocTest(vcfFile, model.c, windows)
+print(res.c)
+@
+
+The above steps can be carried out for binary traits as well. For brevity,
+we only show the variant with the genotype matrix here:
+<<SimpleExAssocTestLog2>>=
+res.b <- assocTest(geno, model.b, windows)
+print(res.b)
+@
+So, it seems as if the computations were completely analogous to continuous
+traits. However, there is an important aspect that indeed makes a difference:
+small sample adjustment. As the reader may have noticed above, the
+null model \verb+model.b+ includes 10,000 resampled residuals for correction
+of higher moments of the null distribution. This correction has actually
+been performed by the above association test. Let us shortly run the
+association test without any correction:
+<<SimpleExAssocTestLog3>>=
+res.b.noAdj <- assocTest(geno, model.b, windows, adj="none")
+print(res.b.noAdj)
+@
+Obviously, the $p$-values seem to have become more significant. Actually, this
+is not the case, but only the result of a too crude approximation of the null
+distribution for smaller sample sizes. So, in a case like this one,
+small sample adjustment and correction of higher moments are essential.
+
+
+\section{Analyzing and Visualizing Results}\label{sec:analysis}
+
+\subsection{Multiple Testing Correction}\label{ssec:multtest}
+
+As soon as multiple tests are performed in parallel, the tests' raw
+$p$-values do not allow for a correct assessment of the overall type I error
+rate anymore and multiple testing correction must be employed. \PODKAT\
+provides a simple method for multiple testing correction that is a wrapper
+around the \R\ standard function \verb+p.adjust()+ from the
+\verb+stats+ package. If called for an
+object of class \verb+AssocTestResultRanges+ (the class of objects the
+\verb+assocTest()+ function creates when called for multiple regions),
+\verb+p.adjust()+ adds a metadata column named \verb+p.value.adj+ with
+adjusted $p$-values:
+<<p.adjustExample>>=
+print(p.adjust(res.c))
+@
+For consistency with the standard \verb+p.adjust()+ function, the
+default correction procedure is \verb+"holm"+, which corresponds to
+the Holm-Bonferroni method for controlling the familywise error rate (FWER)
+\cite{Holm79}. If a different method is desired, e.g.\ the popular
+Benjamini-Hochberg false discovery rate (FDR) correction
+\cite{BenjaminiHochberg95}, the method argument must be used to select the
+desired method:
+<<p.adjustExampleBH>>=
+res.c.adj <- p.adjust(res.c, method="BH")
+print(res.c.adj)
+res.b.adj <- p.adjust(res.b, method="BH")
+print(res.b.adj)
+@
+The user has to make sure to choose a correction method the assumptions of
+which are fulfilled by the given setup. Note that the tests performed by
+\PODKAT\ are usually not independent of each other, at least not if
+overlapping windows and/or windows close to each other are tested.
+
+\subsection{Visualization}\label{ssec:plots}
+
+\PODKAT\ also offers functions for visualizing the results of association
+tests. Suppose we have carried out an association test involving multiple
+regions, e.g.\ a whole-genome or whole-exome association test. In such cases,
+the \verb+assocTest()+ returns an \verb+AssocTestResultRanges+ object that
+contains a metadata column with $p$-values and, if multiple testing correction
+has been employed (see Subsection~\ref{ssec:multtest} above), another
+metadata column with adjusted $p$-values.
+If the \R\ standard generic function \verb+plot()+ is called on such
+an object, a so-called {\em Manhattan plot} is produced, that is,
+log-transformed $p$-values are plotted along the genome:
+\begin{center}
+<<ManhPlot1,fig.width=9,fig.height=4.5,out.width='\\textwidth'>>=
+plot(res.c.adj)
+@
+\end{center}
+Obviously, the function plots raw (uncorrected) $p$-values, where the ones
+passing the significance threshold are plotted in red and the insignificant
+ones are plotted in gray. In order to correctly account for multiple testing,
+we would either have to choose a stricter threshold or use adjusted $p$-values
+instead. The latter can be accomplished by choosing a different $p$-value column
+for plotting:
+\begin{center}
+<<ManhPlot2,fig.width=9,fig.height=4.5,out.width='\\textwidth'>>=
+plot(res.c.adj, which="p.value.adj")
+@
+\end{center}
+If the genome consists of multiple chromosomes, the default is to plot
+the insignificant $p$-values in alternating colors (gray/light gray by
+default). If very many regions have been tested, in particular in whole-genome
+studies, it is advisable to use semi-transparent colors
+(using the alpha channel of functions like \verb+gray()+, \verb+rgb()+,
+or \verb+hsv()+) to get an impression
+of the density of $p$-values. Although this simple example does not
+necessitate this technique, we show an example in order to demonstrate
+how it works:
+\begin{center}
+<<ManhPlot3,fig.width=9,fig.height=4.5,out.width='\\textwidth'>>=
+plot(res.c.adj, which="p.value.adj", col=gray(0.5, alpha=0.25))
+@
+\end{center}
+
+\PODKAT\ further provides a function for making quantile-quantile (Q-Q)
+plots. If called for a single \verb+AssocTestResultRanges+ object, the
+function \verb+qqplot()+ plots log-transformed $p$-values against a uniform
+distribution of $p$-values (which one would expect under the null hypothesis):
+\begin{center}
+\setkeys{Gin}{width=0.6\textwidth}
+<<QQplot1,fig.width=6,fig.height=6,out.width='0.6\\textwidth'>>=
+qqplot(res.c)
+@
+\end{center}
+The same function can also be used to compare two association test results
+in terms of their distributions of $p$-values, e.g.\ to compare two different
+kernels or to compare results with and without small-sample correction:
+\begin{center}
+<<QQplot2,fig.width=6,fig.height=6,out.width='0.6\\textwidth'>>=
+qqplot(res.b, res.b.noAdj)
+@
+\end{center}
+For the above example, we see that the $p$-values without small-sample
+correction are supposedly more significant. The reason is that, in this example,
+the $p$-values without correction are actually systematically inflated:
+\begin{center}
+<<QQplot3,fig.width=6,fig.height=6,out.width='0.6\\textwidth'>>=
+qqplot(res.b.noAdj)
+@
+\end{center}
+
+\subsection{Filtering Significant Regions}\label{ssec:filter}
+
+\PODKAT\ offers a simple method for stripping off all insignificant results
+from an association test result. The method is called \verb+filterResult()+
+and can be applied to association test results given as objects of class
+\verb+AssocTestResultRanges+. The user can choose the significance threshold
+and which $p$-value column the filter should be applied to. The result
+is a subset of the input object consisting of those regions the $p$-value of
+which passed the threshold.
+<<Filter1>>=
+res.c.f <- filterResult(res.c, cutoff=1.e-6)
+print(res.c.f, cutoff=1.e-6)
+res.c.adj.f <- filterResult(res.c.adj, filterBy="p.value.adj")
+print(res.c.adj.f)
+@
+
+\subsection{Contributions of Individual Variants}\label{ssec:contrib}
+
+The association tests provided by \PODKAT\ do not test single-locus variants,
+but consider multiple variants located in the same genomic window
+simultaneously, i.e.\ multiple variants are ``collapsed'' into a single
+score and tested together. As a consequence, \PODKAT\ provides association
+test results per window, but does not allow for pinpointing which
+individual variants may have made a major contribution to the test's outcome.
+For linear kernels (choices \verb+kernel="linear.podkat"+ and
+\verb+kernel="linear.SKAT"+), \PODKAT\ offers a method named
+\verb+weights()+ that allows for
+computing the individual contribution that individual variants made to the
+outcome of a test. It should be clear that this makes little sense
+for non-significant windows. Hence, this method should be applied to a filtered
+result.
+<<Weights1>>=
+w.res.c.adj <- weights(res.c.adj.f, geno, model.c)
+w.res.c.adj
+@
+Obviously, \verb+weights()+ returns a \verb+GRangesList+ object with as
+many components as the first argument has regions. Each of the list components
+is a \verb+GRanges+ object with two metadata columns \verb+weight.raw+
+and \verb+weight.contribution+. The former corresponds to the raw contributions
+of the variants. For each variant, the corresponding
+entry in the column \verb+weight.raw+ is positive if the variant is
+positively associated with the residual/trait. It is negative if the
+variant is negatively associated with the residual/trait. The value
+is around zero if there is (almost) no association. The absolute value
+gives an indication about the magnitude of contribution to the test's
+statistic. The metadata column \verb+weight.contribution+
+corresponds to the relative contribution of each variant. It is
+nothing else but the squares of the \verb+weight.raw+ column, but
+normalized to a sum of 1. As an example, a value of 0.2 means that
+this variant contributed 20\%\ to the test statistic of this region.
+Subsection~\ref{ssec:contrib} provides more details about the
+contributions are computed.
+
+As an example, we plot a histogram of relative contributions of variants
+of the first region:
+\begin{center}
+<<WeightHist,fig.width=8,fig.height=6,out.width='0.7\\textwidth'>>=
+hist(mcols(w.res.c.adj[[1]])$weight.contribution, col="lightblue",
+     border="lightblue", xlab="weight.contribution", main="")
+@
+\end{center}
+The histogram shows a bimodal distribution which indicates that the major
+contributions are made by only a few variants, whereas all others only
+make a minor contribution.
+
+The \PODKAT\ package provides a method for plotting numerical metadata columns
+of \verb+GRanges+ objects. This method can be used to plot the contributions
+of individual variants in a window:
+\begin{center}
+<<WeightHistPlot1,fig.width=8,fig.height=6,out.width='0.7\\textwidth'>>=
+plot(w.res.c.adj[[1]], "weight.contribution")
+@
+\end{center}
+In the above plot, each variant is visualized as an equally large bar/interval
+along the horizontal axis. Alternatively, the function can also plot
+contributions (or any other numerical metadata column) along the genome.
+In the following plot, the type \verb+"b"+ has been chosen with the aim
+to indicate the positions of variants:
+\begin{center}
+<<WeightHistPlot2,fig.width=8,fig.height=6,out.width='0.7\\textwidth'>>=
+plot(w.res.c.adj[[1]], "weight.raw", alongGenome=TRUE, type="b")
+@
+\end{center}
+
+In order to allow the user to easily find the most indicative variant,
+the \verb+filterResult()+ method can be applied to weights, too. If
+called for \verb+GRanges+ or \verb+GRangesList+ objects, the function
+\verb+filterResult()+ checks if a metadata column \verb+weight.contribution+
+is available and strips off all variant with a relative contribution lower
+than the given threshold \verb+cutoff+ (the default is 0.1):
+<<FilterWeights>>=
+filterResult(w.res.c.adj, cutoff=0.07)
+@
+That the same variants stand out twice in the above result is neither
+an error nor a coincidence: the most indicative variants of both
+windows appear are located in their overlap.
+
+As a further analysis tool, \PODKAT\ offers to plot the genotype in a
+heatmap-like fashion, as it is or with respect to traits/phenotypes. In
+the following example, we read the region that has been identified as
+most significant from the VCF file and display it:
+\begin{center}
+<<DisplayGenotype,fig.width=8,fig.height=8,out.width='0.7\\textwidth'>>=
+res.c.adj.sorted <- sort(res.c.adj, sortBy="p.value.adj")
+Zi <- readGenotypeMatrix(vcfFile, regions=res.c.adj.sorted[1])
+plot(Zi, labRow=NA)
+@
+\end{center}
+The plot is more expressive if the genotypes are plotted along with the
+trait/phenotype:
+\begin{center}
+<<DisplayGenotype2,fig.width=8,fig.height=8,out.width='0.7\\textwidth'>>=
+plot(Zi, y=pheno.c$y, labRow=NA)
+@
+\end{center}
+In this plot, the samples (rows) are sorted according to the phenotype value.
+This allows for better finding variants whose minor alleles (gray or black)
+accumulate in the upper or lower part of the plot. For instance, it is clearly
+visible that the minor alleles of variant \verb+snv:239+, the one that had
+the highest contribution, accumulate in the upper part of the plot.
+
+Note, however, that the genotypes have not been tested for associations with
+the trait directly, but for associations with the trait after correction for
+covariates (i.e.\ with the null model residuals):
+\begin{center}
+<<DisplayGenotype4,fig.width=8,fig.height=8,out.width='0.7\\textwidth'>>=
+plot(Zi, y=residuals(model.c), labRow=NA)
+@
+\end{center}
+Now the accumulation of minor alleles of variant \verb+snv:239+ in the upper
+part of the plot becomes even more prominent.
+
+Analogous functionality is also available for binary traits. In such a case,
+however, samples are sorted according to class (trait 0 or 1) and color-coded:
+\begin{center}
+<<DisplayGenotype5,fig.width=8,fig.height=8,out.width='0.7\\textwidth'>>=
+res.b.adj.sorted <- sort(res.b.adj, sortBy="p.value.adj")
+Zi <- readGenotypeMatrix(vcfFile, regions=res.b.adj.sorted[1])
+plot(Zi, y=factor(pheno.b$y), labRow=NA)
+@
+\end{center}
+Note that, if the binary trait is numerical, it must be passed as a factor in
+order to ensure that \verb+plot()+ correctly recognizes it as a categorical
+entity.
+
+\section{Miscellanea}\label{sec:misc}
+
+\subsection{Creating Suitable VCF Files}\label{ssec:prepVCF}
+
+The main file format for storing variant calls, no matter whether they
+have been determined by microarrays or next-generation sequencing, is the
+{\em Variant Call Format (VCF)}.%
+\footnote{\url{http://www.1000genomes.org/wiki/analysis/variant-call-format/vcf-variant-call-format-version-42}}
+Not surprisingly, this is the main file format that is used and supported by
+\PODKAT. However, in order to make VCF files suitable as input files for
+\PODKAT, some preparations may be necessary. Most importantly,
+{\em \PODKAT\ expects all samples of a study to be included in one single VCF
+file.} In other words, if samples are spread over multiple VCF files, these
+files must be {\em merged} before \PODKAT\ can be used.
+
+\subsubsection{Software tools}
+
+All steps described below require that \verb+tabix+ and \verb+bgzip+ are
+available on the computer system on which the VCF preprocessing steps are
+to be performed. If they are not yet available, the latest version of
+\verb+tabix+ \cite{LiHandsakerWysokerFennellRuanHomerMarth09} must be
+downloaded,%
+\footnote{\url{http://sourceforge.net/projects/samtools/files/tabix/}}
+compiled, and installed. This package also includes \verb+bgzip+, so no
+extra effort is necessary to install \verb+bgzip+. Make sure
+that the executables \verb+tabix+ and \verb+bgzip+ are in the default
+search path.
+
+For merging and concatentating VCF files, either install the
+Perl-based VCFtools\footnote{\url{http://vcftools.sourceforge.net/}}
+\cite{DanecekAutonAbecasisAlbersBanksDePristoHandsaker11}
+or the faster bcftools/htslib VCF commands.%
+\footnote{\url{http://vcftools.sourceforge.net/htslib.html}}
+Make sure that the necessary executables are in the default search path.
+
+All examples below are supposed to run on Unix-like systems (including
+Linux and Mac OS X). The examples below that are prefixed
+with \verb+$+ are supposed to be run in a Unix/Linux terminal, not in an
+\R\ session. If the user wants to run them on a MS Windows system,
+some modifications may be necessary.
+
+\subsubsection{Merging VCF files}
+
+Suppose that the samples of a study are distributed across multiple
+Gnu-zipped VCF files, e.g. \verb+s1.vcf.gz+ -- \verb+s100.vcf.gz+. Further
+suppose that a Tabix index file is available for each of these files. If this
+is not the case, \verb+tabix+ must be run on the VCF files to create this index
+file. As an example,
+\begin{quote}
+\begin{verbatim}
+$ tabix -p vcf s1.vcf.gz
+\end{verbatim}
+\end{quote}
+will create an index file \verb+s1.vcf.gz.tbi+. As said, if an index file is
+available for each VCF file, the files are ready to be merged. Using
+the Perl-based VCFtools, this can be done as follows:
+\begin{quote}
+\begin{verbatim}
+$ vcf-merge -c both s*.vcf.gz | bgzip -c > merged.vcf.gz
+$ tabix -p vcf merged.vcf.gz
+\end{verbatim}
+\end{quote}
+The first command above merges all files \verb+s1.vcf.gz+ -- \verb+s10.vcf.gz+
+into a newly created VCF file \verb+merged.vcf.gz+. The second command
+again creates a Tabix index file of the merged VCF file. The option
+\verb+-c both+ ensures that single-nucleotide variants (SNVs)%
+\footnote{which of course includes single-nucleotide polymorphisms (SNPs)}
+and indels ocurring at overlapping
+locations are kept separate and not merged.
+
+If the bcftools/htslib VCF commands are used, merging can be done
+in a very similar way:
+\begin{quote}
+\begin{verbatim}
+$ bcftools merge -m both s*.vcf.gz | bgzip -c > merged.vcf.gz
+$ tabix -p vcf merged.vcf.gz
+\end{verbatim}
+\end{quote}
+Note that \verb+-c both+ must be replaced by \verb+-m both+ in this variant;
+the meaning, however, is the same.
+
+{\em The above commands are to be used in cases where the sample sets of
+the individual VCF files are disjoint/non-overlapping. Do not use them
+in case that the sample sets of the VCF files overlap, as this would lead
+to duplication of samples in the merged VCF file!}
+
+\subsubsection{Concatenating VCF files}
+
+Suppose that the study data are split over multiple files each of which
+contains the same samples, but each of which contains different variants,
+e.g.\ each file contains variants of one chromosome. Then \PODKAT\ can be
+used in two ways: (1) by running association tests for each VCF file/chromosome
+independently and merging the results afterwards or (2) by {\em concatenating
+the VCF files into one single VCF file.} The latter can be accomplished
+as follows (for an example in which we have files \verb+chr1.vcf.gz+ --
+\verb+chr22.vcf.gz+ and \verb+chrX.vcf.gz+ all of which have been indexed
+previously):
+\begin{quote}
+\begin{verbatim}
+$ vcf-concat chr*.vcf.gz | bgzip -c > concat.vcf.gz
+$ tabix -p vcf concat.vcf.gz
+\end{verbatim}
+\end{quote}
+
+Suppose the same scenario as above, but with an additional file
+\verb+chrY.vcf.gz+ which contains only the male samples of the study.
+This case can be handled with the \verb+-p+ option which merges
+files even if the sample sets do not agree. In such a case, missing values
+are imputed on the Y chromosome for female samples:
+\begin{quote}
+\begin{verbatim}
+$ vcf-concat -p chr*.vcf.gz | bgzip -c > concat.vcf.gz
+$ tabix -p vcf concat.vcf.gz
+\end{verbatim}
+\end{quote}
+
+\subsubsection{Filtering VCF files}
+
+If some special filtering steps should be performed prior to running an
+association test with \PODKAT, the commands \verb+vcf-annotate+ or
+\verb+bcftools annotate+ can be used. See the tools' documentation for
+more information \cite{DanecekAutonAbecasisAlbersBanksDePristoHandsaker11}.
+
+\subsection{Reading from VCF Files}\label{ssec:readVCF}
+
+The \PODKAT\ package provides a lightweight, fast, and memory-efficient
+method for reading genotypes from VCF files. Like the \verb+readVcf()+ function
+from the \verb+VariantAnnotation+ package
+\cite{ObenchainLawrenceCareyGogartenShannonMorgan14}, it uses the
+\verb+tabix+ API provided by the \verb+Rsamtools+ package
+\cite{LiHandsakerWysokerFennellRuanHomerMarth09,MorganPagesObenchainHayen2015}.
+In contrast to \verb+readVcf()+,
+however, it concentrates on the absolutely necessary minimum and passes the
+result as a sparse matrix, which greatly reduces memory usage, in particular,
+if many variants have a low minor allele frequency. The name of the function
+that has already been used above is \verb+readGenotypeMatrix()+. As a
+first argument, it expects a \verb+TabixFile+ object or simply the
+filename of a VCF file. The function allows for reading the entire VCF file at
+once or for limiting to certain genomic regions. The latter can be accomplished
+by passing a \verb+GRanges+ object with the regions of interest to
+\verb+readGenotypeMatrix()+ as argument \verb+regions+. All of this
+functionality has been used above already (cf.~Sections~\ref{sec:impatient}
+and \ref{sec:assocTest} above).
+
+The function \verb+readGenotypeMatrix()+ can be used as an alternative to
+the \verb+readVcf()+ function from the \verb+VariantAnnotation+ package
+\cite{ObenchainLawrenceCareyGogartenShannonMorgan14}.
+However, the following restrictions have to be taken into account:
+\begin{itemize}
+  \item The returned object does not provide the exact genotypes.
+    Instead, only integer values are returned in sparse matrix format.
+    A 1 corresponds to one minor allele, whereas higher numbers correspond to
+    a higher number of minor alleles. Phasing information is not taken into
+    account and different minor alleles are not distinguished either.
+    All values not present in the sparse matrix object are considered as
+    major alleles only.
+  \item The \verb+readGenotypeMatrix()+ function does not allow for returning
+    missing values. The \verb+na.action+ option allows for three ways of
+    treating missing values in the VCF file: if \verb+"impute.major"+
+    (the default), all missing values are imputed with major alleles; if
+    \verb+"omit"+, all variants with missing values are ignored and omitted
+    from the output object; if \verb+"fail"+, the function stops with an error
+    when it encounters the first missing value.
+\end{itemize}
+The function further allows for omitting indels, for omitting variants that do
+not have a \verb+PASS+ in the \verb+FILTERS+ column of the VCF file, for
+omitting variants exceeding a certain ratio of missing values, for omitting
+variants with an MAF above a certain threshold, and for swapping minor and
+major alleles if a variant has an MAF greater than 50\%. For details, see the
+help page of \verb+readGenotypeMatrix()+.
+
+The \PODKAT\ package further provides a method for reading basic info, such as,
+alleles, types of mutations, and minor allele frequencies (MAFs), from a
+VCF file without actually reading the genotypes:
+<<VariantInfo>>=
+vInfo <- readVariantInfo(vcfFile, omitZeroMAF=FALSE, refAlt=TRUE)
+vInfo
+summary(vInfo)
+@
+The object returned by \verb+readVariantInfo()+ is of class \verb+VariantInfo+
+which is essentially a \verb+GRanges+ object with the information about the
+variants stored in its metadata columns. By default, \verb+readVariantInfo()+
+does not return reference and alternate alleles. This must be enforced by
+\verb+refAlt=TRUE+. In any case, even if reference and alternate alleles are
+not returned, the function returns information about the type of
+mutation (transition, transversion, multiple alternate alleles, indel, or
+unknown/other).
+
+\subsection{Using Genotypes from Other Data Sources}\label{ssec:otherSource}
+
+The Variant Call Format%
+\footnote{\url{http://www.1000genomes.org/wiki/analysis/variant-call-format/vcf-variant-call-format-version-42}}
+(VCF) is the primary file format supported by the \PODKAT\ package.
+If a user has genotype data in another format, there are basically two ways
+of using such data:
+\begin{enumerate}
+\item Use some software tool to convert the genotype data into a VCF file.
+\item Convert the data to a matrix format (inside or outside of R) and
+  pass the matrix data to \PODKAT.
+\end{enumerate}
+The first approach above obviously requires no adapation of the \PODKAT\
+workflow. For the second approach, the matrix data have to be converted to
+a \verb+GenotypeMatrix+ object first. This can be done simply by
+the \verb+genotypeMatrix()+ constructor. This function converts the matrix
+to a columnwise sparse matrix and attaches positional information to it.
+The original matrix has to be passed to \verb+genotypeMatrix()+ such that
+rows correspond to samples and columns correspond to variants. The values in
+the matrix need to conform to \PODKAT's interpretation (0 \dots\ only
+major alleles / other values \dots\ number of minor alleles).
+Here is a simple example with a random matrix:
+<<GenotypeMatrixConstructorExample>>=
+A <- matrix(rbinom(10000, size=1, prob=0.05), 200, 50)
+pos <- sort(sample(1:200000, 50))
+Z <- genotypeMatrix(A, pos=pos, seqnames="chr1")
+Z
+variantInfo(Z)
+@
+In the example above, positions and chromosome names are supplied as a numeric
+vector and a character vector, respectively. It is also possible to supply
+a \verb+GRanges+ object directly.
+
+Though \PODKAT\ has mainly been designed for analyzing sequencing data,
+there are also
+\verb+genotypeMatrix()+ constructors that create a \verb+GenotypeMatrix+
+object from an expression set (\verb+eSet+) object. Finally, it is worth
+to mention that \PODKAT\ also can handle VCF data that are stored in an
+object of class \verb+VCF+ (cf.\ package \verb+VariantAnnotation+
+\cite{ObenchainLawrenceCareyGogartenShannonMorgan14}). For
+details, see the help page of \verb+genotypeMatrix()+.
+
+\subsection{Preparations for a New Genome}\label{ssec:newGenome}
+
+As described in Section~\ref{sec:regInterest}, it is necessary to define
+regions of interest for association testing. For whole-genome association
+testing, this is typically done by partitioning the sequenced regions of
+a genome into windows (overlapping or non-overlapping). The \PODKAT\ package
+provides readymade \verb+GRangesList+ objects with the sequenced regions
+of the following genomes: hg18, hg19, hg38, b36, and b37. For other genomes,
+the sequenced regions must be pre-processed first and stored to an object
+of class \verb+GRanges+ or \verb+GRangesList+. \PODKAT\ provides a
+function \verb+unmaskedRegions()+ that allows for performing this pre-processing
+step conveniently for genomes given as \verb+MaskedBSgenome+ objects.
+
+The following example shows how this can be done for the autosomal chromosomes
+of the mouse mm10 genome:
+<<UnmaskedRegionsMM10,message=FALSE>>=
+library(BSgenome.Mmusculus.UCSC.mm10.masked)
+regions <- unmaskedRegions(BSgenome.Mmusculus.UCSC.mm10.masked,
+                           chrs=paste0("chr", 1:19))
+names(regions)
+regions$chr1
+@
+
+\PODKAT\ also allows for treating pseudo-autosomal regions separately. In order
+to facilitate association testing in which pseudo-autosomal regions are treated
+like autosomal regions (and unlike sex chromosomes), it is necessary to define
+pseudo-autosomal regions from the beginning. The \verb+unmaskedRegions()+
+function
+can do that and all it needs is a data frame with positional information about
+pseudo-autosomal regions. The format of the data frame has been chosen
+deliberately to make direct use of the definitions of pseudo-autosomal regions
+as provided by the \verb+GWASTools+ package. The following code shows
+how to extract unmasked regions of sex chromosomes taking pseudoautosomal
+regions into account (based on hg38):
+<<UnmaskedRegionsSexHg38,message=FALSE>>=
+library(BSgenome.Hsapiens.UCSC.hg38.masked)
+library(GWASTools)
+
+pseudoautosomal.hg38 ## from GWASTools package
+psaut <- pseudoautosomal.hg38
+psaut$chrom <- paste0("chr", psaut$chrom)
+psaut
+
+regions <- unmaskedRegions(BSgenome.Hsapiens.UCSC.hg38.masked,
+                           chrs=c("chrX", "chrY"), pseudoautosomal=psaut)
+names(regions)
+regions$chrX
+regions$X.PAR1
+@
+Except for the fact that the above example only considers the two sex
+chromosomes, this is exactly the R code that was used to create the
+\verb+hg38Unmasked+ data object provided by \PODKAT. The other objects
+for hg18, hg19, b36, and b37 also contain pseudo-autosomal regions as separate
+components.
+
+\subsection{Handling Large Data Sets}%
+\label{ssec:parallel}
+
+Small or moderately sized association tests like the examples presented
+above can be performed within seconds on a regular desktop computer.
+Large whole-genome studies, for example, the two whole-genome cohorts
+from the UK10K project\footnote{\url{http://www.uk10k.org/studies/cohorts.html}}
+comprise thousands of samples and tens of millions of variants, and the
+compressed VCF files amount to hundreds of gigabytes. In order to analyze such
+vast amounts of data, \PODKAT\ implements two complementary
+strategies, chunking and parallelization, that we will describe in more detail
+in the following.
+
+\subsubsection{Chunking}\label{sssec:chunking}
+
+The genotype data stored in a 300GB compressed VCF file would
+hardly fit into the main memory of a supercomputer, let alone a desktop
+computer. It has already been mentioned above that \verb+assocTest()+
+can be called for a \verb+TabixFile+ object or simply the file name of
+a compressed VCF file, though we have not yet gone into detail how
+\verb+assocTest()+ processes a VCF file. In fact, it does {\em not load the
+entire file} (as we have done above by calling \verb+readGenotypeMatrix()+
+and then calling \verb+assocTest()+ on the returned \verb+GenotypeMatrix+
+object). Instead, it processes batches of regions, i.e.\ the variants from
+a certain number of regions are read from the VCF file and processed at once.
+How many regions are processed at once is determined by the \verb+batchSize+
+argument (the default is 20). So suppose that \verb+assocTest()+ is
+called for a \verb+ranges+ argument that contains 1000 regions to be tested,
+then 50 read operations are performed, each time 20 regions are read from the
+VCF file at once and then processed.
+
+The \verb+batchSize+ should be chosen such that the entire genotype matrix
+of the regions of the batch still fits into the computer's main memory.
+Otherwise swapping will severly slow down the computations. A batch size of
+1 is not optimal either, since the large number of reading operations
+and the redundancies from reading variants of overlapping regions may lead
+to much overhead. The default of 20 regions is a cautious choice that need not
+be optimal under all possible circumstances. Depending on the number of samples
+and the size of the regions, one may safely increase the batch size to
+100 or even higher.
+
+By means of its chunking strategy, \PODKAT\ is in principle able to process
+large VCF files even on desktop computers in a single-processor manner.
+The resulting computation times, however, can be considerably long. If this is
+not acceptable, a multi-core system must be used along with \PODKAT's
+parallelization abilities (see next).
+
+\subsubsection{Parallel Processing}\label{sssec:parallel}
+
+As mentioned above already, \PODKAT\ allows for performing large association
+tests on multiple processors. \PODKAT\ makes use of R socket clusters as
+provided by the \verb+parallel+ package (formerly \verb+snow+/\verb+snowfall+).
+The simplest way of using this approach is to set the \verb+nnodes+ argument
+to a number larger than 1:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{assocTest}\hlstd{(vcfFile, model.b, windows,} \hlkwc{nnodes}\hlstd{=}\hlnum{8}\hlstd{)}
+\end{alltt}
+\begin{verbatim}
+##!!## Overview of association test:
+##!!## 	Null model: logistic 
+##!!## 	Number of samples: 200 
+##!!## 	Number of regions: 79 
+##!!## 	Number of regions without variants: 0 
+##!!## 	Average number of variants in regions: 24.1 
+##!!## 	Genome: hgA 
+##!!## 	Kernel: linear.podkat 
+##!!## 	p-value adjustment: none
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+In this example, computations are carried out by 8 parallel
+R client processes. If the computer system has 8 or more cores/processors,
+these R client processes are typically assigned to different cores/processors.
+So it makes no sense to set \verb+nnodes+ to a number higher than the number
+of cores/processors; otherwise only unnecessary overhead would be caused.
+
+If the \verb+nnodes+ argument is used, the \verb+assocTest()+ function
+creates the socket cluster internally and also shuts it down as soon as the
+computations have been finished. This is surely acceptable for one-time
+analyses, but starting and shutting down the cluster creates unnecessary
+overhead if multiple association tests are to be performed. In such a
+scenario, it is more efficient if the user creates the socket cluster outside of
+\verb+assocTest()+ and uses it multiple times via the \verb+cl+ argument,
+as in the following example which creates a socket cluster with 8 R client
+processes, runs two association tests on this cluster, and then shuts down
+the cluster:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{cl} \hlkwb{<-} \hlkwd{makePSOCKcluster}\hlstd{(}\hlnum{8}\hlstd{)}
+\hlkwd{assocTest}\hlstd{(vcfFile, model.b, windows,} \hlkwc{cl}\hlstd{=cl)}
+\end{alltt}
+\begin{verbatim}
+##!!## Overview of association test:
+##!!## 	Null model: logistic 
+##!!## 	Number of samples: 200 
+##!!## 	Number of regions: 79 
+##!!## 	Number of regions without variants: 0 
+##!!## 	Average number of variants in regions: 24.1 
+##!!## 	Genome: hgA 
+##!!## 	Kernel: linear.podkat 
+##!!## 	p-value adjustment: none
+\end{verbatim}
+\begin{alltt}
+\hlkwd{assocTest}\hlstd{(vcfFile, model.c, windows,} \hlkwc{cl}\hlstd{=cl)}
+\end{alltt}
+\begin{verbatim}
+##!!## Overview of association test:
+##!!## 	Null model: linear 
+##!!## 	Number of samples: 200 
+##!!## 	Number of regions: 79 
+##!!## 	Number of regions without variants: 0 
+##!!## 	Average number of variants in regions: 24.1 
+##!!## 	Genome: hgA 
+##!!## 	Kernel: linear.podkat 
+##!!## 	p-value adjustment: none
+\end{verbatim}
+\begin{alltt}
+\hlkwd{stopCluster}\hlstd{(cl)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+The granularity of parallelization is determined by the \verb+batchSize+
+argument described in \ref{sssec:chunking} above: each client process reads and
+processes as many regions at once as determined by the \verb+batchSize+
+argument, then hands back control to the R master session until it is assigned
+the next chunk/batch. Each client reads directly from the VCF file itself.
+Therefore, no large genomic data need  to be exchanged between master and client
+processes.
+
+Note that socket connections are used for the communication between the
+R master session and its clients. Since the number of connections that can be
+opened in an R session is currently limited to 128, the maximum number of
+possible clients is also limited by 128 --- or less if other connections are
+open in the R master session at the same time.
+
+The above examples are geared to running parallelized association tests on
+a multi-core/multi-processor machine. The \verb+parallel+ package also allows
+for distributing computations over multiple machines (see
+documentation of package \verb+parallel+ for more details). This also works
+with \PODKAT, however, only under the following two conditions:
+\begin{enumerate}
+  \item All necessary packages (including \PODKAT) are installed on all
+    machines. Moreover, R versions and package versions need to be at least
+    compatible on the different machines. (better: exactly the same)
+  \item The path to the VCF file that should be analyzed is accessible to all
+    R processes (master and clients). This can be accomplished by (1) storing
+    a copy of the VCF file on each machine at exactly the same location or (2)
+    by sharing the file between all machines over the network or, in the ideal
+    case, within a clustered file system.
+\end{enumerate}
+As said, it is in principle possible to distribute association tests over
+multiple machines, however, it is more convenient and more efficient to
+run large association tests on sufficiently large multi-core/multi-processor
+computers.
+
+It is hard to give general estimations of computation times, since the
+performance of \PODKAT's association tests depends on various factors, such
+as, number of cores/processors, main memory, bus architecture,
+file system performance, etc. So we restrict to one, not necessarily
+representative example: Johannes Kepler University Linz (JKU) operates an
+SGI\RTM\ Altix\RTM UltraViolet 1000 compute server with 2,048 cores. On this
+system, a whole-genome association test (all autosomal human chromosomes)
+with about 1,800 samples and about 570,000 regions
+completed within less than 15 minutes (testing against continuous trait;
+size of compressed VCF file: about 350GB; computation distributed
+over 120 cores). Despite the intimidating figures of this example, \PODKAT\
+is implemented such that it can perform this analysis also on a regular
+desktop computer with a single processor only.
+The computation time, however, would amount to about 30 hours.
+
+\section{More Details About \PODKAT}\label{sec:details}
+
+\subsection{Test Statistics}\label{ssec:teststat}
+
+In line with the SNP-set Kernel Association Test%
+\footnote{formerly known as Sequence Kernel Association Test}
+(\SKAT) \cite{WuLeeCaiLiBoehnkeLin11}, \PODKAT\ uses a variance component
+score test to test for associations between genotypes and traits.
+\SKAT\ assumes that traits are distributed according to the following
+semi-parametric mixed models:
+\begin{align*}
+\mathrm{logit}\big(p(y=1)\big)&= \alpha_0 + \bm{\alpha}^T\cdot\bm{x}+
+h(\bm{z}) & \text{(binary trait)} \\
+y &= \alpha_0 + \bm{\alpha}^T\cdot\bm{x}+ h(\bm{z})+\varepsilon
+ & \text{(continuous trait)}
+\end{align*}
+In the above formulas, $y$ is the trait, $\bm{x}$ is the covariate vector,
+$\bm{z}$ is the genotype vector, $\alpha_0$ is the intercept,
+$\bm{\alpha}$ are the fixed effect coefficients, $h(.)$ is an unknown centered
+smooth function and $\varepsilon$ is the error term. \SKAT\ and \PODKAT\ both
+assume that the function $h(.)$ is from a function space that is generated by a
+given positive semi-definite kernel function $K(.,.)$ \cite{LiuGhoshLin08}.
+
+\SKAT's and \PODKAT's null hypothesis is that $y$ is not influenced by the
+genotype:
+\begin{align*}
+p(y=1)&= \mathrm{logit}^{-1}\big(\alpha_0 + \bm{\alpha}^T\cdot\bm{x}
+\big) & \text{(binary trait)} \\
+y &= \alpha_0 + \bm{\alpha}^T\cdot\bm{x}+ \varepsilon
+ & \text{(continuous trait)}
+\end{align*}
+
+As mentioned above, we use a {\em variance component score
+test} \cite{Lin97,LiuGhoshLin08,WuLeeCaiLiBoehnkeLin11} to test against
+the null hypothesis. More
+specifically, assume that a study consists of $l$ samples. The traits
+are, therefore, given as a vector $\bm{y}\in\{0,1\}^l$ (if the trait is
+binary) or $\bm{y}\in\Real^l$ (if the trait is continuous). Covariates are given
+as an $l\times n$ matrix $\Mat{X}$, and genotypes are given as an
+$l\times d$ matrix $\Mat{Z}$. Further suppose that a (logistic) linear model
+has been trained to predict $\bm{y}$ from the covariates only. For a continuous
+trait, we denote the obtained predictions/fitted values with $\hat{\bm{y}}$.
+For a binary trait, $\hat{\bm{y}}$ denotes the estimated/fitted probabilities
+that each sample belongs to the positive class. Then, in both cases,
+$\bm{y}-\hat{\bm{y}}$ corresponds to the null model residuals, i.e.\
+what cannot be explained by the covariates only. Then the test statistic
+is defined as
+\[
+Q=(\bm{y}-\hat{\bm{y}})^T\cdot\Mat{K}
+\cdot(\bm{y}-\hat{\bm{y}}),
+\]
+where $\Mat{K}$ is an $l\times l$ positive semi-definite kernel matrix defined
+as $K_{i,j}=K(\bm{z}_i,\bm{z}_j)$, where $\bm{z}_i$ and $\bm{z}_j$ are the
+genotypes of the $i$-th and $j$-th sample, respectively, i.e.\ the $i$-th and
+$j$-th row of the genotype matrix $\Mat{Z}$. The kernel matrix $\Mat{K}$ can
+be understood as a matrix that measures the pairwise similarity of genotypes
+of samples. Since $\Mat{K}$ is positive semi-definite,
+$Q$ is non-negative. The more structure the residual $\bm{y}-\hat{\bm{y}}$ and
+the matrix $\Mat{K}$ share, the larger $Q$ (see Figure~\ref{fig:SKATinterp}
+for illustrative examples).
+If the residuals and the genotypes are independent, i.e.\ if the test's null
+hypothesis holds true, large values can only occur by pure chance with a low
+probability. Hence, we test whether the actually observed $Q$ value is
+higher than expected by pure chance. In other words, the test's $p$-value is
+computed as the (estimated) probability of observing a value under the null
+hypothesis of independence between genotypes and traits that is at least as
+large as the observed $Q$.
+\begin{figure}
+\begin{center}
+\begingroup\setlength{\arraycolsep}{2pt}
+\fbox{\begin{minipage}{0.98\textwidth}
+{\bfseries\sffamily A}\\[-2ex]
+{\tiny
+\[
+Q=\overbrace{\left(\begin{array}{cccccccc}
+\gO & \gO & \gO & \gO & -1 & -1 & -1 & -1
+\end{array}\right)}^{(\bm{y}-\bm{\hat y})^T}\cdot
+\overbrace{\left(
+\begin{array}{cccccccc}
+\gO & \gO & \gO & \gO & 0 & 0 & 0 & 0 \\
+\gO & \gO & \gO & \gO & 0 & 0 & 0 & 0 \\
+\gO & \gO & \gO & \gO & 0 & 0 & 0 & 0 \\
+\gO & \gO & \gO & \gO & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & \gO & \gO & \gO & \gO \\
+0 & 0 & 0 & 0 & \gO & \gO & \gO & \gO \\
+0 & 0 & 0 & 0 & \gO & \gO & \gO & \gO \\
+0 & 0 & 0 & 0 & \gO & \gO & \gO & \gO
+\end{array}
+\right)}^{\Mat{K}}\cdot
+\overbrace{\left(
+\begin{array}{r}
+\gO\\
+\gO\\
+\gO\\
+\gO\\
+-1\\
+-1\\
+-1\\
+-1
+\end{array}
+\right)}^{\bm{y}-\bm{\hat y}}
+=\overbrace{\left(\begin{array}{cccccccc}
+\gF & \gF & \gF & \gF & -4 & -4 & -4 & -4
+\end{array}\right)}^{(\bm{y}-\bm{\hat y})^T\cdot\Mat{K}}\cdot
+\overbrace{\left(
+\begin{array}{r}
+\gO\\
+\gO\\
+\gO\\
+\gO\\
+-1\\
+-1\\
+-1\\
+-1
+\end{array}
+\right)}^{\bm{y}-\bm{\hat y}}=32
+\]}
+\end{minipage}}
+\fbox{\begin{minipage}{0.98\textwidth}
+{\bfseries\sffamily B}\\[-2ex]
+{\tiny
+\[
+Q=\overbrace{\left(\begin{array}{cccccccc}
+\gO & -1 & \gO & -1 & \gO & -1 & \gO & -1
+\end{array}\right)}^{(\bm{y}-\bm{\hat y})^T}\cdot
+\overbrace{\left(
+\begin{array}{cccccccc}
+\gO & \gO & \gO & \gO & 0 & 0 & 0 & 0 \\
+\gO & \gO & \gO & \gO & 0 & 0 & 0 & 0 \\
+\gO & \gO & \gO & \gO & 0 & 0 & 0 & 0 \\
+\gO & \gO & \gO & \gO & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & \gO & \gO & \gO & \gO \\
+0 & 0 & 0 & 0 & \gO & \gO & \gO & \gO \\
+0 & 0 & 0 & 0 & \gO & \gO & \gO & \gO \\
+0 & 0 & 0 & 0 & \gO & \gO & \gO & \gO
+\end{array}
+\right)}^{\Mat{K}}\cdot
+\overbrace{\left(
+\begin{array}{r}
+\gO\\
+-1\\
+\gO\\
+-1\\
+\gO\\
+-1\\
+\gO\\
+-1
+\end{array}
+\right)}^{\bm{y}-\bm{\hat y}}
+=\overbrace{\left(\begin{array}{cccccccc}
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0
+\end{array}\right)}^{(\bm{y}-\bm{\hat y})^T\cdot\Mat{K}}\cdot
+\overbrace{\left(
+\begin{array}{r}
+\gO\\
+-1\\
+\gO\\
+-1\\
+\gO\\
+-1\\
+\gO\\
+-1
+\end{array}
+\right)}^{\bm{y}-\bm{\hat y}}=0
+\]}
+\end{minipage}}
+\fbox{\begin{minipage}{0.98\textwidth}
+{\bfseries\sffamily C}\\[-2ex]
+{\tiny
+\[
+Q=\overbrace{\left(\begin{array}{cccccccc}
+\gO & \gO & \gO & \gO & -1 & -1 & -1 & -1
+\end{array}\right)}^{(\bm{y}-\bm{\hat y})^T}\cdot
+\overbrace{\left(
+\begin{array}{cccccccc}
+\gO & \gO & \gO & \gO & 0 & 0 & 0 & 0 \\
+\gO & \gO & \gO & \gO & 0 & 0 & 0 & 0 \\
+\gO & \gO & \gO & \gO & 0 & 0 & 0 & 0 \\
+\gO & \gO & \gO & \gO & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\end{array}
+\right)}^{\Mat{K}}\cdot
+\overbrace{\left(
+\begin{array}{r}
+\gO\\
+\gO\\
+\gO\\
+\gO\\
+-1\\
+-1\\
+-1\\
+-1
+\end{array}
+\right)}^{\bm{y}-\bm{\hat y}}
+=\overbrace{\left(\begin{array}{cccccccc}
+\gF & \gF & \gF & \gF & 0 & 0 & 0 & 0
+\end{array}\right)}^{(\bm{y}-\bm{\hat y})^T\cdot\Mat{K}}\cdot
+\overbrace{\left(
+\begin{array}{r}
+\gO\\
+\gO\\
+\gO\\
+\gO\\
+-1\\
+-1\\
+-1\\
+-1
+\end{array}
+\right)}^{\bm{y}-\bm{\hat y}}=16
+\]}
+\end{minipage}}
+\endgroup
+\end{center}
+\caption{Examples with 8 samples illustrating the variance component test score.
+  {\bf A:}~strong correspondence between the signs of residuals and the blocks
+  in the kernel matrix $\Mat{K}$ results in high $Q$.
+  {\bf B:}~no correspondence between signs of residuals and blocks in $\Mat{K}$
+  results in low $Q$.
+  {\bf C:}~even if there is only a partial correspondence between the signs of
+  the residuals and the blocks in $\Mat{K}$, a relatively high $Q$ is obtained.}
+\label{fig:SKATinterp}
+\end{figure}
+
+In order to compute the $p$-value, we need to know the null distribution of $Q$,
+i.e.\ how $Q$ is distributed under the assumption that $y$ does not depend on
+$\bm{z}$. For continuous traits and normally distributed noise $\varepsilon$,
+the residuals are normally distributed and the distribution of $Q$ is obviously
+a {\em mixture of $\chi^2$ distributions}. For binary traits, $Q$
+approximately follows a {\em mixture of $\chi^2$ distributions}, too
+\cite{Lin97,WuLeeCaiLiBoehnkeLin11}. In either case,
+\begin{equation}
+Q\sim \sum\limits_{k=1}^q \lambda_k\cdot\chi_{1,k}^2,\label{eq:chi2mixt}
+\end{equation}
+where $\chi_{1,k}^2$ are independent $\chi^2$-distributed random variables with
+one degree of freedom and $\lambda_1,\dots,\lambda_q$ are the non-zero
+eigenvalues of the positive semi-definite $l\times l$ matrix
+\[
+\Mat{P}_0^{\frac{1}{2}}\cdot\Mat{K}\cdot\Mat{P}_0^{\frac{1}{2}}.
+\]
+with
+\begin{equation}
+\Mat{P}_0 = \Mat{V} - \Mat{V}\cdot\Mat{\tilde X}\cdot
+\big(\Mat{\tilde X}^T\cdot\Mat{V}\cdot\Mat{\tilde X}\big)^{-1}\cdot
+\Mat{\tilde X}^T\cdot\Mat{V}.\label{eq:P0}
+\end{equation}
+In \eqref{eq:P0}, $\Mat{V}$ is a diagonal matrix defined as
+$\Mat{V}=\hat{\sigma}\cdot{\Mat{I}}$ for continuous traits (with $\hat{\sigma}$
+being the estimated variance of regression residuals under the null hypothesis)
+and as $\Mat{V}=\mathrm{diag}\big(\hat{y}_1(1-\hat{y}_1),\dots,
+\hat{y}_l(1-\hat{y}_l)\big)$ for binary traits, where the diagonal entries
+$\hat{y}_i(1-\hat{y}_i)$ are obviously the estimated individual variances of
+the fitted values of the null model \cite{WuLeeCaiLiBoehnkeLin11}. Furthermore,
+$\Mat{\tilde X}=(\vec{1}\mid \Mat{X})$ is the model matrix of the (logistic)
+linear model trained on the covariates. Once the eigenvalues
+$\lambda_1,\dots,\lambda_q$ have
+been determined, a method for estimating the probability distribution function
+of a mixture of $\chi^2$ distributions can be used to compute the tests
+$p$-value, such as, Davies' method \cite{Davies80} or Liu's method
+\cite{LiuTangZhang09}. Like \SKAT\ does too, \PODKAT\ implements both methods
+and the method can be chosen with the \verb+method+ argument (unless small
+sample correction is used; see Subsection~\ref{ssec:sscor} below).
+
+\PODKAT\ further implements a new variant of the above test that is suitable for
+smaller studies with binary traits in which no covariates need to be taken into
+account. This test assumes the following random effects model:
+\[
+\mathrm{logit}\big(p(y=1)\big)= \alpha_0 +
+h(\bm{z})
+\]
+The null hypothesis of this variant is that the trait is Bernoulli-distributed
+with a constant probability and independent of the genotype, i.e.
+\[
+p(y=1)=\mathrm{logit}^{-1}(\alpha_0).
+\]
+With the same assumptions as above, the test statistic is given as
+\[
+Q=\bm{y}^T\cdot\Mat{K} \cdot\bm{y}.
+\]
+Since all $y_i$ are Bernoulli-distributed (we estimate the probability of a
+positive outcome as the relative frequency of positive outcomes
+$\bar p=\frac{1}{l}\sum_{i=1}^l y_i$), $Q$ is distributed according to a
+{\em mixture of Bernoulli distribitions} and the exact $p$-value of the test
+can be computed as
+\[
+p=\sum\limits_{\bm{y}} p(\bm{y})\cdot
+\left\{\begin{array}{ll}
+1 & \text{if } \bm{y}^T\cdot\Mat{K} \cdot\bm{y}\geq Q \\
+0 & \text{otherwise}
+\end{array}\right\},
+\]
+i.e.\ the sum of probabilities of outcomes that produce a test statistic at
+least as large as $Q$. For a given outcome $\bm{y}=(y_1,\dots,y_l)$, the
+probability is given as
+\begin{align*}
+p(\bm{y})&=\bar p^k\cdot(1-\bar p)^{l-k} & \text{with } &
+k=\sum\limits_{i=1}^l y_i.
+\end{align*}
+Since all $y_i$ are binary, $Q=\bm{y}^T\cdot\Mat{K} \cdot\bm{y}$ is nothing
+else but the sum of the sub-matrix of $\Mat{K}$ that consists of all those
+rows and columns $i$ for which $y_i=1$ holds. If all entries of $\Mat{K}$ are
+non-negative, the test's exact $p$-value can be computed by a recursive
+algorithm that starts from $\bm{y}=(1,\dots,1)$ and recursively removes ones
+as long as $\bm{y}^T\cdot\Mat{K} \cdot\bm{y}\geq Q$ holds.
+
+In order to use this variant, the null model must be created with
+\verb+type="bernoulli"+. With the default setting \verb+type="automatic"+,
+this variant is chosen if the trait is binary, no covariates are present, and
+the number of samples does not exceed 100. The latter restriction is necessary
+to avoid excessive computation times caused by the recursive computation of
+exact $p$-values.
+
+\subsection{Kernels}\label{ssec:kernels}
+
+It is clear from the previous section that the association tests implemented in
+\PODKAT\ rely on the choice of a kernel function that computes the pairwise
+similarities of the samples' genotypes. The simplest kernel is the
+{\em linear kernel} that computes the similarities as the outer product of the
+genotype matrices:
+\[
+\Mat{K}=\Mat{Z}\cdot\Mat{Z}^T
+\]
+This kernel can be used by calling \verb+assocTest()+ with the option
+\verb+kernel="linear.SKAT"+ and without any weighting
+(\verb+weightFunc=NULL+). The kernel's name has been deliberately chosen to
+indicate that this is nothing else but the linear \SKAT\ test without weights.
+The same test can also be carried out with the {\em weighted linear kernel}
+\begin{equation}
+\Mat{K}=\Mat{Z}\cdot\Mat{W}\cdot\Mat{W}^T\cdot\Mat{Z}^T,\label{eq:linKernel}
+\end{equation}
+where $\Mat{W}$ is a diagonal matrix of weights
+$\Mat{W}=\mathrm{diag}(w_1,\dots,w_d)$ with which the columns (i.e.\ variants)
+in the genotype matrix $\Mat{Z}$ are scaled before the outer product is
+computed. If \verb+assocTest()+ is called for a VCF file, the weighting must
+be done via a {\em weighting function} that computes the variants' weights as
+a function of their minor allele frequencies (see
+Subsection~\ref{ssec:weightFunc} below). If \verb+assocTest()+ is called for a
+matrix-like object, weights can be also specified as a per-column weight vector
+using the \verb+weights+ argument.
+
+The acronym \PODKAT\ stands for {\em Position-Dependent Kernel Association
+Test}. This test uses a {\em position-dependent
+linear kernel}:
+\begin{equation}
+\Mat{K}=\Mat{Z}\cdot\Mat{W}\cdot\Mat{P}\cdot\Mat{P}^T
+\cdot\Mat{W}^T\cdot\Mat{Z}^T,\label{eq:posDepKernel}
+\end{equation}
+The $d\times d$ matrix $\Mat{P}$ is a positive semi-definite kernel
+matrix that measures the similarities/closeness of positions of variants, i.e.
+\[
+P_{i,j}=\max\big(1-{\textstyle\frac{1}{w}}|\mathrm{pos}_i-\mathrm{pos}_j|,
+0\big),
+\]
+where $\mathrm{pos}_i$ and $\mathrm{pos}_j$ are the genomic positions of
+the $i$-th and the $j$-th variant, respectively. The parameter $w$ determines
+the {\em maximal radius of tolerance}: if two positions are the same, the kernel
+gives a similarity of 1; the similarity decreases linearly with increasing
+genomic distance of the two variants under consideration; if the distance is
+$w$ or larger, the positional similarity is 0. This similarity is actually
+a positive semi-definite kernel
+\cite{BelancheVazquezVazquez08,BodenhoferSchwarzbauerIonescuHochreiter09}.
+Figure~\ref{fig:posKernel} shows how the similarity depends on the difference
+of positions. This kernel can be used by calling \verb+assocTest()+ with the
+option \verb+kernel="linear.podkat"+ (which is the default). Weighting
+can be configured in the same way as described for the linear kernel above. The
+radius of tolerance $w$ can be set with the parameter \verb+width+ (the
+default is 1,000~bp).
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.8\textwidth]{PosKernel}
+\end{center}
+\caption{Graph demonstrating how the similarity of genomic positions is
+computed depending on the difference of positions.}\label{fig:posKernel}
+\end{figure}
+
+The motivation behind \PODKAT's position-dependent kernel is to better account
+for very rare or even {\em private variants}, that is, variants that only
+occur in one sample. The linear kernel is not able to take private variants
+into account. In order to demonstrate that, consider how a single entry of
+the kernel matrix is computed (for simplicity without any weighting):
+\[
+K_{i,j}=\sum\limits_{k=1}^d Z_{i,k}\cdot Z_{j,k}
+\]
+If the $k$-th variant is private, there is only one $i$ for which $Z_{i,k}>0$,
+whereas all other $Z_{j,k}=0$. Hence, the $k$-th variant makes no contribution
+to $K_{i,j}$ for $i\not=j$. The position-dependent kernel, however, computes
+a convolution of the genotype matrix with the position kernel and thereby
+makes use of agglomerations of private variants in the same genomic region.
+\begin{figure}
+\begin{center}
+\fbox{\begin{minipage}{0.95\textwidth}
+{\bfseries\sffamily A}\hspace{0.34\textwidth}%
+\makebox[0pt][c]{$\Mat{Z}$}
+\hspace{0.42\textwidth}\makebox[0pt][c]{$\Mat{K}=\Mat{Z}\cdot\Mat{Z}^T$}
+\\[1.6ex]
+\includegraphics[width=\textwidth]{SKAT_example}
+\end{minipage}}
+\fbox{\begin{minipage}{0.95\textwidth}
+{\bfseries\sffamily B}\hspace{0.34\textwidth}%
+\makebox[0pt][c]{$\Mat{Z}\cdot\Mat{P}$}\hspace{0.42\textwidth}
+\makebox[0pt][c]{$\Mat{K}=\Mat{Z}\cdot\Mat{P}\cdot\Mat{P}^T\cdot\Mat{Z}^T$}
+\\[1.6ex]
+\includegraphics[width=\textwidth]{PODKAT_example}
+\end{minipage}}
+\end{center}
+\caption{Simple example demonstrating how \PODKAT's position-dependent kernel
+takes private variants into account. {\bf A:}~genotype matrix
+$\Mat{Z}$ (left) and kernel matrix of the linear kernel (right);
+{\bfseries B:}~convolution of genotype matrix $\Mat{Z}$ with
+positional similarities $\Mat{P}$ (left) and kernel matrix of the
+position-dependent kernel (right).}
+\label{fig:posDepKernelExample}
+\end{figure}
+
+Figure~\ref{fig:posDepKernelExample} shows
+a simple example that demonstrates how \PODKAT's position-dependent kernel
+takes private variants into account. On the left, Panel~A,
+shows the genotype matrix $\Mat{Z}$. Obviously, $\Mat{Z}$ consists of 6 samples
+and 11 variants, each of which occurs in only one sample. The right-hand side
+of Panel~A shows the kernel matrix that would be obtained
+for the linear kernel. Since all variants are private, the kernel matrix is
+diagonal, which does not allow for any meaningful association testing, since
+there are no blocks of similar samples in the kernel matrix (compare with
+Section~\ref{ssec:teststat} and the examples in Figure~\ref{fig:SKATinterp}).
+The left side of Panel~B shows the convolution of
+the genotype matrix $\Mat{Z}$ with the positional similarities $\Mat{P}$, and
+the right side shows the resulting kernel matrix for the position-dependent
+kernel. Suddenly, two blocks of samples (samples 1--3 and samples 4--6) become
+visible, as a result of the fact that samples 1--3 have minor alleles in the
+left half of the sequence and samples 4--6 have minor alleles in the right
+half of the sequence. Now suppose that samples 1--3 are cases and samples
+4--6 are controls. If the mutations/minor alleles in the left half of the
+sequence (e.g.\ a particular exon or transcription factor binding site)
+are causal for the disease, \PODKAT\ would be able to detect that, whereas
+\SKAT\ with the regular linear kernel would not be able to detect that.
+
+\PODKAT\ further provides the {\em IBS (identity by state) kernel}
+\[
+K_{i,j}=\frac{1}{\sum_{k=1}^d w_d}
+\sum\limits_{k=1}^d w_k\cdot(2-|Z_{i,k}-Z_{j,k}|)
+\]
+and the {\em quadratic kernel}
+\[
+K_{i,j}=\big(1+\sum\limits_{k=1}^d w_k\cdot Z_{i,k}\cdot Z_{j,k}\big)^2
+\]
+that are also available in \SKAT\ \cite{WuLeeCaiLiBoehnkeLin11}.
+In order to make use of these two kernels, \verb+assocTest()+ must be
+called with the parameters \verb+kernel="localsim.SKAT"+ or
+\verb+kernel="quadratic.SKAT"+, respectively.
+Analogously to the linear kernel, weighting must be controlled with the
+argument \verb+weightFunc+ (or \verb+weights+) and can be switched off
+with \verb+weightFunc=NULL+ which means that \verb+assocTest()+ internally
+sets all $w_k=1$. Additionally, in order to enable these kernels also to
+take private variants into account, there are position-dependent variants of
+the IBS kernel and the quadratic kernel that can be used with kernels
+\verb+"localsim.podkat"+ or \verb+"quadratic.podkat"+,
+respectively. These kernels first compute the convolution of the genotype
+matrix $\Mat{Z}$ with the positional similarities $\Mat{P}$ (compare
+with example in Figure~\ref{fig:posDepKernelExample}B) and then compute
+the kernel matrices according to the formulas above.
+
+It must be pointed out that the linear kernel and the position-dependent
+linear kernel (kernel choices \verb+linear.SKAT+ and \verb+linear.podkat+)
+can be represented as outer products, which, in many cases,
+allows for much more efficient computations than the other four kernels.
+So, the computing times for large whole-genome studies with the four
+kernel choices \verb+localsim.SKAT+, \verb+localsim.podkat+,
+\verb+quadratic.SKAT+, and \verb+quadratic.podkat+ can be prohibitely long.
+
+\subsection{Weighting Functions}\label{ssec:weightFunc}
+
+As mentioned above, all six kernels implemented in \PODKAT\ can be used
+with and without weighting. In all six kernels, weights need to be defined
+in a per-variant fashion (i.e.\ one weight per column of the genotype matrix
+$\Mat{Z}$). If \verb+assocTest()+ is called for a VCF file, i.e.\
+its argument \verb+Z+ is the file name of a VCF file or a \verb+TabixFile+
+object, then \verb+assocTest()+ requires a one-argument function that computes
+a vector of weights from a vector of minor allele frequencies (MAFs).
+This function must be passed as \verb+weightFunc+ argument (if it is
+\verb+NULL+, then the kernels are used without weights).
+
+For convenience, \PODKAT\ provides three built-in functions.
+Firstly, there is
+\verb+invSdWeights+ which is defined as
+\begin{equation}
+f(x)=\frac{1}{\sqrt{x\cdot(1-x)}},\label{eq:invSdWeights}
+\end{equation}
+i.e.\ it computes weights as the reciprocals of the standard deviations
+of minor allele probabilities \cite{MadsenBrowning09}:
+\[
+w_k=\frac{1}{\sqrt{\MAF_k\cdot(1-\MAF_k)}}
+\]
+This variant is provided as function \verb+invSdWeights()+.
+Figure~\ref{fig:weightFuncs}A visualizes this weighting function.
+\begin{figure}
+\begin{center}
+\fbox{\begin{minipage}{0.98\textwidth}
+{\bfseries\sffamily A}\\
+\centerline{\includegraphics[width=0.8\textwidth]{invSdWeights}}
+\end{minipage}}
+\fbox{\begin{minipage}{0.98\textwidth}
+{\bfseries\sffamily B}\\
+\centerline{\includegraphics[width=0.8\textwidth]{betaWeights}}
+\end{minipage}}
+\fbox{\begin{minipage}{0.98\textwidth}
+{\bfseries\sffamily C}\\
+\centerline{\includegraphics[width=0.8\textwidth]{logisticWeights}}
+\end{minipage}}
+\end{center}
+\caption{{\bfseries A:}~weighting function \eqref{eq:invSdWeights};
+  {\bfseries B:}~beta distribution weighting functions
+  \ref{eq:betaWeights} for different parameters;
+  {\bfseries C:}~soft threshold weighting functions
+  \ref{eq:logisticWeights} for different parameters.}\label{fig:weightFuncs}
+\end{figure}
+
+Secondly, there is a parameterized family of weighting functions that
+correspond to the densities of the beta distribution:
+\begin{equation}
+f_{\alpha,\beta}(x)=\frac{x^{\alpha-1}\cdot(1-x)^{\beta-1}}{B(\alpha,\beta)},
+\label{eq:betaWeights}
+\end{equation}
+where $\alpha,\beta$ are the two shape parameters and $B(\alpha,\beta)$ is
+a normalization constant that only depends on the shape parameters. The package
+provides the function \verb+betaWeights()+. If called with the two arguments
+\verb+shape1+ and \verb+shape2+, this function creates the weighting
+function with these particular shape parameters. The default weight parameters
+are $\alpha=1$ and $\beta=25$ as suggested by Wu {\em et al.}
+\cite{WuLeeCaiLiBoehnkeLin11}. This is actually the default setting of
+the \verb+weightFunc+ parameter of the \verb+assocTest()+ function.
+Figure~\ref{fig:weightFuncs}B shows some examples with different shape
+parameters.
+
+Thirdly, \PODKAT\ offers the possibility to use a {\em soft threshold function}
+(logistic function)
+\begin{equation}
+f(x)=\frac{1}{1+\exp\big(a\cdot(x-\theta)\big)},\label{eq:logisticWeights}
+\end{equation}
+where $\theta$ is the threshold and $a$ is the slope that determines how
+hard/soft the threshold is. The function \verb+logisticWeights()+ can be used
+to create a weighting function with given threshold and slope.
+Figure~\ref{fig:weightFuncs}C shows some examples with parameters.
+
+Users are not limited to the three weighting schemes described above: it is
+possible to pass arbitrary weighting functions as \verb+weightFunc+
+argument. However, user-provided weighting functions must conform to some
+conventions: (1) they must be written such that MAFs can be passed as first
+arguments; (2) MAFs can be passed as numeric vectors and the result is a
+numeric vector of the same length; (3) the returned weights are non-negative;
+(4) the function requires no arguments other than the first one.
+
+\subsection{Computing Single-Variant Contributions}\label{ssec:svcontrib}
+
+As mentioned in Subsection~\ref{ssec:contrib} above, \PODKAT\
+allows for decomposing the test statistic $Q$ into individual contributions
+of single variants. This is possible for the linear kernel and the
+position-dependent linear kernel. The linear kernel can be reformulated as
+\[
+Q=(\bm{y}-\hat{\bm{y}})^T\cdot\Mat{Z}\cdot\Mat{W}\cdot\Mat{W}^T\cdot
+\Mat{Z}^T\cdot(\bm{y}-\hat{\bm{y}})
+=\|\underbrace{\Mat{W}^T\cdot\Mat{Z}^T\cdot(\bm{y}-\hat{\bm{y}})}_{=\bm{p}}\|^2,
+\]
+where $\bm{p}=\Mat{W}^T\cdot\Mat{Z}^T\cdot(\bm{y}-\hat{\bm{y}})$ is a vector
+of length $d$. In the same way,
+the position-dependent linear kernel can be rewritten as
+\[
+Q=(\bm{y}-\hat{\bm{y}})^T\cdot\Mat{Z}\cdot\Mat{W}\cdot\Mat{P}\cdot\Mat{P}^T\cdot
+\Mat{W}^T\cdot\Mat{Z}^T\cdot(\bm{y}-\hat{\bm{y}})
+=\|\underbrace{\Mat{P}^T\cdot\Mat{W}^T\cdot\Mat{Z}^T\cdot
+  (\bm{y}-\hat{\bm{y}})}_{=\bm{p}}\|^2.
+\]
+Again $\bm{p}=\Mat{P}^T\cdot\Mat{W}^T\cdot\Mat{Z}^T\cdot(\bm{y}-\hat{\bm{y}})$
+is a vector of length $d$. So, in both cases, $Q$ can be represented as
+the squared norm, i.e.\ the sum of squares, of a vector $\bm{p}$ of length $d$,
+i.e.\ with one entry per variant:
+\[
+Q=\|\bm{p}\|^2=\sum\limits_{k=1}^d p_k^2
+\]
+So, the $k$-th variant contributes $p_k^2$ to the test statistic $Q$.
+The function \verb+weights()+ described in Subsection~\ref{ssec:contrib}
+computes two values per variant: on the one hand, the raw contribution
+$p_k$ is stored in the metadata column \verb+weight.raw+.
+These values are particularly helpful to find out how a variant is
+associated with the residuals $\bm{y}-\hat{\bm{y}}$. If it is positive,
+the association is positive. If it is negative, the association is negative.
+On the other hand, the {\em relative contribution}
+\[
+p'_k=\frac{p_k^2}{\|\bm{p}\|^2}=\frac{p_k^2}{Q}
+\]
+is stored to the metadata column \verb+weight.contribution+. This
+value measures how much each variant contributes to the test statistic $Q$,
+where these contributions are normalized to sum up to one.
+
+\subsection{Details on the Small Sample Correction}\label{ssec:sscor}
+
+As mentioned in the Subsection~\ref{ssec:teststat}, the test statistic of
+\PODKAT's association tests is assumed to follow a mixture of
+$\chi^2$ distributions \eqref{eq:chi2mixt} \cite{WuLeeCaiLiBoehnkeLin11},
+where, as already mentioned above, the mixture weights
+$\bm{\lambda}=(\lambda_1,\dots,\lambda_q)$ (with $q\leq l$) are given as
+the non-zero eigenvalues of the matrix
+\begin{equation}
+\Mat{P}_0^{\frac{1}{2}}\cdot\Mat{K}\cdot\Mat{P}_0^{\frac{1}{2}}\label{eq:P0KP0}
+\end{equation}
+(with $\Mat{P}_0$ being defined as described in \eqref{eq:P0} above).
+This is theoretically provable for continuous traits under the assumptions of
+the null hypothesis, but holds only approximately
+for binary traits. In many cases, the identifiation of the mixture of
+$\chi^2$ distributions as proposed above  leads to inflated type I error rates
+for binary traits. In order to overcome this problem, Lee {\em et al.}
+\cite{LeeEmondBamshadBarnesRiederNickerson12} have proposed a {\em small
+sample correction} for binary traits for \SKAT. \PODKAT\ introduces a new
+position-dependent kernel for being able to take private and very rare variants
+into account, but otherwise builds upon the same test framework as \SKAT.
+Therefore, \PODKAT\ also implements the small sample correction according to
+\cite{LeeEmondBamshadBarnesRiederNickerson12}.
+
+The small sample correction alternatively computes the $p$-value of an
+association test for binary traits (as described in
+Subsection~\ref{ssec:teststat}) as
+\begin{equation}
+1-P_{\chi^2_{\mathrm{df}}}\Big(\frac{(Q-\mu_Q)\cdot\sqrt{2\mathrm{df}}}%
+{\sigma_Q}+\mathrm{df}\Big),\label{eq:nullDistSScor}
+\end{equation}
+where $P_{\chi^2_{\mathrm{df}}}$ is the cumulative distribution function of a $\chi^2$
+distribution with $\mathrm{df}$ degrees of freedom, $\mu_Q$ is the theoretical
+mean of the mixture
+\begin{equation}
+\mu_Q=\sum\limits_{k=1}^q \lambda_k\label{eq:muQ}
+\end{equation}
+i.e.\ the expected test statistic under the null hypothesis, $\sigma_Q^2$
+is the theoretical variance of the mixture
+\begin{equation}
+\sigma_Q^2=\bm{\lambda}^T\cdot\Mat{C}\cdot\bm{\lambda}\label{eq:theorVar}
+\end{equation}
+and $\mathrm{df}$ is the number of degrees of freedom that is computed as
+\begin{equation}
+\mathrm{df}=\frac{\Big(\sum\limits_{k=1}^l \lambda_k'^2\Big)^2}%
+       {\sum\limits_{k=1}^l \lambda_k'^4}.\label{eq:dfChi2}
+\end{equation}
+In \eqref{eq:theorVar} above, $\Mat{C}$ is a $q\times q$ matrix defined as
+\[
+\Mat{C}=\Mat{U}_2^T\cdot\mathrm{diag}(\bm{\varphi})\cdot\Mat{U}_2+2\cdot\Mat{I}
+\]
+where $\Mat{U}_2$ is an $l\times q$ matrix containing the elementwise squares
+of $\Mat{U}$, the $l\times q$ matrix of eigenvectors of non-zero eigenvalues
+of the matrix \eqref{eq:P0KP0} and $\bm{\varphi}$ is a vector of length
+$l$ the entries of which are defined as
+\[
+\varphi_k=\frac{3p(y_i=1)^2-3p(y_i=1)+1}{p(y_i=1)(1-p(y_i=1))}-3.
+\]
+Practically, the probabilities $p(y_i=1)$ are estimated by the null model's
+fitted probabilities $\hat y_i$ (see Subsection~\ref{ssec:teststat}).
+Finally, the values $\lambda_k'$ in \eqref{eq:dfChi2} are defined as
+\[
+\lambda'_k=\frac{\lambda_k\cdot C_{k,k}}{\sqrt{2}},
+\]
+where $C_{k,k}$ are the diagonal elements of the matrix $\Mat{C}$ defined above.
+
+The R package \verb+SKAT+ does not exactly use the above method, but uses the
+matrix
+\begin{equation}
+\Mat{V}^{\frac{1}{2}}\cdot\Mat{K}\cdot\Mat{V}^{\frac{1}{2}}\label{eq:VKV}
+\end{equation}
+(with $\Mat{V}$ defined as in Subsection~\ref{ssec:teststat}) instead
+to determine the mixture weights. This is mainly for computational
+efficiency, since the square root of the diagonal matrix $\Mat{V}$ is much
+easier to compute than the square root of the dense matrix $\Mat{P}_0$.
+It can be proven easily that the eigenvalues of matrix \eqref{eq:VKV} are
+the same as of matrix \eqref{eq:P0KP0}. However, the eigenvectors, which are
+needed for computing the matrix $\Mat{C}$ are not identical, but sufficiently
+close, as computational simulations have demonstrated. \PODKAT, by default,
+uses this approximation too, but also allows for using the exact matrix
+\eqref{eq:P0KP0}. In order to make use of this option, the null model has
+to be created by calling \verb+nullModel()+ with the option
+\verb+adjExact=TRUE+. With this option, \verb+nullModel()+ pre-computes
+the square root of matrix $\Mat{P}$ and stores it to the slot \verb+P0sqrt+
+of the returned \verb+NullModel+ object.
+
+Lee {\em et al.} \cite{LeeEmondBamshadBarnesRiederNickerson12} further
+suggested to adjust the higher moments of the estimated null distribution
+used in \eqref{eq:nullDistSScor} by correcting the degrees of freedom parameter
+$\mathrm{df}$ such that the kurtosis fits to the kurtosis observed in residuals
+sampled according to the null distribution. \PODKAT, like \SKAT, offers two
+methods that can be specified when training a null model with
+\verb+nullModel()+: \verb+type.resampling="bootstrap"+ creates
+residuals according the estimated Bernoulli distributions with probabilities
+$\hat{y}_i$; \verb+type.resampling="permutations"+ computes permutations of
+the residuals. The former variant is the default and strongly recommended.
+So, given the test statistics $Q_1,\dots,Q_N$ of $N$ sampled vectors of
+residuals, the correction for higher moments estimates the
+excess kurtosis $\hat{\gamma}$ and then replaces the parameter $\mathrm{df}$
+in \eqref{eq:nullDistSScor} by
+\[
+\mathrm{df}=\frac{12}{\hat{\gamma}}.
+\]
+\PODKAT\ offers multiple ways for estimating the excess kurtosis from the
+sampled test statistics $Q_1,\dots,Q_N$ (the number $N$ can be determined with
+the \verb+n.resampling.adj+ argument of the function \verb+nullModel()+).
+Which variant is chosen, can be determined with the argument \verb+method+
+when calling \verb+assocTest()+:
+\begin{description}
+  \item[Unbiased sample kurtosis:] this method
+    uses the theoretical mean of the null distribution
+    $\mu_Q$ (if available; see \eqref{eq:muQ}) and estimates the
+    excess kurtosis as
+    \[
+      \hat{\gamma}=\frac{\frac{1}{N}\sum\limits_{k=1}^N(Q_k-\mu_Q)^4}%
+          {\Big(\frac{1}{N}\sum\limits_{k=1}^N(Q_k-\mu_Q)^2\Big)^2}-3.
+    \]
+    This variant can be selected with \verb+method="unbiased"+.
+  \item[Biased sample kurtosis:] first computes
+    the empirical mean $\hat{\mu}_1$ of the sampled test and estimates the
+    excess kurtosis as
+    \[
+      \hat{\gamma}=\frac{\frac{1}{N}\sum\limits_{k=1}^N(Q_k-\hat{\mu}_1)^4}%
+          {\Big(\frac{1}{N}\sum\limits_{k=1}^N(Q_k-\hat{\mu}_1)^2\Big)^2}-3.
+    \]
+    This variant can be selected with \verb+method="sample"+.
+  \item[Corrected sample kurtosis:] this variant
+    is aimed at computing an (almost) unbiased estimator of the excess
+    kurtosis as
+    \[
+    \gamma=\frac{(N+1)\cdot N\cdot (N-1)}{(N-2)\cdot(N-3)}\cdot
+         \frac{\sum\limits_{k=1}^N(Q_k-\hat{\mu}_1)^4}%
+          {\Big(\sum\limits_{k=1}^N(Q_k-\hat{\mu}_1)^2\Big)^2}-3\cdot
+          \frac{(N-1)^2}{(N-2)\cdot(N-3)}.
+    \]
+    This method can be selected with \verb+method="population"+.
+  \item[\SKAT\ compatibility mode:] this variant
+    is aimed at consistency with the implementation in the R package
+    \verb+SKAT+; it estimates the excess kurtosis as
+    \[
+      \hat{\gamma}=\frac{\frac{1}{N}\sum\limits_{k=1}^N(Q_k-\hat{\mu}_1)^4}%
+          {\Big(\frac{1}{N-1}\sum\limits_{k=1}^N(Q_k-\hat{\mu}_1)^2\Big)^2}-3.
+     \]
+    This method can be selected with \verb+method="SKAT"+.
+\end{description}
+
+As already mentioned briefly in Section~\ref{sec:nullModel}, the
+argument \verb+adj+ of the \verb+nullModel()+ function controls how the
+null model is prepared to be ready for small sample correction and higher moment
+correction. The setting \verb+adj="force"+ creates sampled residuals
+for later higher moment correction in any case, while \verb+adj="none"+
+generally switches off the creation of sample residuals.
+The default is \verb+adj="automatic"+ which creates sampled
+residuals if the number of samples in the study is at most 2,000. The number of
+sampled residuals is controlled by the \verb+n.resampling.adj+ argument
+as noted in Section~\ref{sec:nullModel} already. The default number of sampled
+residuals is 10,000.
+
+The function \verb+assocTest()+ has an \verb+adj+ argument too, the meaning
+of which is similar to the \verb+adj+ argument of the \verb+nullModel()+
+function: if \verb+assocTest()+ is called with \verb+adj="automatic"+ (which is
+the default), corrections are only made for at most 2,000 samples. For more
+than 2,000 samples, all corrections are switched off. For
+\verb+adj="force"+, corrections are generally switched on, and for
+\verb+adj="none"+, corrections are generally switched off.
+
+If corrections are switched on, the small sample correction described above
+is performed. As  already mentioned, which variant is used is determined by
+whether the null model has been created with \verb+adjExact=TRUE+ or
+\verb+adjExact=FALSE+.
+
+If the null model includes sampled residuals, the small sample correction is
+complemented by the higher moment correction described above. In case that
+\verb+assocTest()+ fails to compute the mixture weights
+$\bm{\lambda}=(\lambda_1,\dots,\lambda_q)$, it still uses the formula
+\eqref{eq:nullDistSScor} for computing the $p$-values, but uses values for
+$\mu_Q$ and $\sigma_Q$ that were also estimated from the sampled test
+statistics.
+
+It must be emphasized that both small sample correction and higher moment
+correction, especially the latter, result in a significant increase of
+computation times. For larger studies, we suggest to try \verb+assocTest()+
+without small sample correction first and to create a Q-Q plot to analyze the
+results. If the $p$-values in the Q-Q plot are sufficiently close to the
+diagonal, the test correctly controls the type I error rate and no correction
+is necessary anyway. If this not the case and the test is either too conservative
+(i.e.\ $p$-values in the Q-Q plot are consistently below the diagonal) or
+the $p$-values are inflated (i.e.\ $p$-values in the Q-Q plot are
+consistently above the diagonal), some correction should be applied. To use
+both corrections regardless of the number of samples, both \verb+nullModel()+
+and \verb+assocTest()+ must be called with \verb+adj="force"+. To use
+small sample correction, but without correction for higher moments,
+call \verb+nullModel()+ with \verb+adj="none"+ (which turns off the creation
+of sampled residuals), but call \verb+assocTest()+ with \verb+adj="force"+.
+
+\section{Future Extensions}\label{sec:ext}
+
+We plan or at least consider the following extensions in future version of this
+package:
+\begin{itemize}
+\item Option in the VCF reader that allows for splitting up multiple minor
+  alleles into separate variants. Currently, multiple minor alleles are
+  considered together as if they were synonymous.
+%%\item
+\end{itemize}
+
+\section{Change Log}\label{sec:chLog}
+
+\begin{description}
+\item[Version 0.99.0:] first version submitted to Bioconductor
+\end{description}
+
+\section{How to Cite This Package}\label{sec:cite}
+
+If you use this package for research that is published later, you are kindly
+asked to cite it as follows:
+\begin{quotation}
+\noindent U.\ Bodenhofer (2015).
+{\em PODKAT: an R package for association testing involving rare and private
+variants.} R package version 0.99.0.
+\end{quotation}
+
+%\bibliographystyle{plain}
+%\bibliography{Bioinformatics,BioStatistics,Biology,BodenhoferPub,Statistics,MachineLearningClassical}
+\begin{thebibliography}{10}
+
+\bibitem{BelancheVazquezVazquez08}
+L.~Belanche, J.~L. V\'azquez, and M.~V\'azquez.
+\newblock Distance-based kernels for real-valued data.
+\newblock In C.~Preisach, H.~Burkhardt, L.~Schmidt-Thieme, and R.~Decker,
+  editors, {\em Data Analysis, Machine Learning and Applications}, Studies in
+  Classification, Data Analysis, and Knowledge Organization, pages 3--10.
+  Springer, Berlin, 2008.
+
+\bibitem{BenjaminiHochberg95}
+Y.~Benjamini and Y.~Hochberg.
+\newblock Controlling the false discovery rate: a practical and powerful
+  approach to multiple testing.
+\newblock {\em J. Roy. Statist. Soc. Ser. B}, 57(1):289--300, 1995.
+
+\bibitem{BodenhoferSchwarzbauerIonescuHochreiter09}
+U.~Bodenhofer, K.~Schwarzbauer, M.~Ionescu, and S.~Hochreiter.
+\newblock Modeling position specificity in sequence kernels by fuzzy
+  equivalence relations.
+\newblock In J.~P. Carvalho, D.~Dubois, U.~Kaymak, and J.~M.~C. Sousa, editors,
+  {\em Proc. Joint 13th IFSA World Congress and 6th EUSFLAT Conference}, pages
+  1376--1381, Lisbon, July 2009.
+
+\bibitem{DanecekAutonAbecasisAlbersBanksDePristoHandsaker11}
+P.~Danecek, A.~Auton, G.~Abecasis, C.~A. Albers, E.~Banks, M.~A. DePristo,
+  R.~E. Handsaker, G.~Lunter, G.~T. Marth, S.~T. Sherry, G.~McVean, R.~Durbin,
+  and {1000 Genomes Project Analysis Group}.
+\newblock The variant call format and {VCFtools}.
+\newblock {\em Bioinformatics}, 27(15):2156--2158, 2011.
+
+\bibitem{Davies80}
+R.~B. Davies.
+\newblock The distribution of a linear combination of $\chi^2$ random
+  variables.
+\newblock {\em J. R. Stat. Soc. Ser. C-Appl. Stat.}, 29:323--333, 1980.
+
+\bibitem{Holm79}
+S.~Holm.
+\newblock A simple sequentially rejective multiple test procedure.
+\newblock {\em Scand. J. Stat.}, 6(2):65--70, 1979.
+
+\bibitem{KentSugnetFureyRoskinPringleZahlerHaussler02}
+W.~J. Kent, C.~W. Sugnet, T.~S. Furey, K.~M. Roskin, T.~H. Pringle, A.~M.
+  Zahler, and D.~Haussler.
+\newblock The human genome browser at {UCSC}.
+\newblock {\em Genome Res.}, 12:996--1006, 2002.
+
+\bibitem{LeeEmondBamshadBarnesRiederNickerson12}
+S.~Lee, M.~J. Emond, M.~J. Bamshad, K.~C. Barnes, M.~J. Rieder, D.~A.
+  Nickerson, {NHLBI GO Exome Sequencing Project---ESP Lung Project Team}, D.~C.
+  Christiani, M.~M. Wurfel, and X.~Lin.
+\newblock Optimal unified approach for rare-variant association testing with
+  application to small-sample case-control whole-exome sequencing studies.
+\newblock {\em Am. J. Hum. Genet.}, 91(2):224--237, 2012.
+
+\bibitem{LiHandsakerWysokerFennellRuanHomerMarth09}
+H.~Li, B.~Handsaker, A.~Wysoker, T.~Fenell, J.~Ruan, N.~Homer, G.~Marth,
+  G.~Abecasis, R.~Durbin, and {1000 Genome Project Data Processing Subgroup}.
+\newblock The sequence alignment/map format and {SAMtools}.
+\newblock {\em Bioinformatics}, 25(16):2078--2079, 2009.
+
+\bibitem{Lin97}
+X.~Lin.
+\newblock Variance component testing in generalised linear models with random
+  effects.
+\newblock {\em Biometrika}, 84(2):309--326, 1997.
+
+\bibitem{LiuGhoshLin08}
+D.~Liu, D.~Ghosh, and X.~Lin.
+\newblock Estimation and testing for the effect of a genetic pathway on a
+  disease outcome using logistic kernel machine regression via logistic mixed
+  models.
+\newblock {\em BMC Bioinformatics}, 9:292, 2008.
+
+\bibitem{LiuTangZhang09}
+H.~Liu, Y.~Tang, and H.~Zhang.
+\newblock A new chi-square approximation to the distribution of non-negative
+  definite quadratic forms in non-central normal variables.
+\newblock {\em Comput. Stat. Data Anal.}, 53:853--856, 2009.
+
+\bibitem{MadsenBrowning09}
+B.~E. Madsen and S.~R. Browning.
+\newblock A groupwise association test for rare mutations using a weighted sum
+  statistic.
+\newblock {\em PLoS Genetics}, 5(2):e1000384, 2009.
+
+\bibitem{MorganPagesObenchainHayen2015}
+M.~Morgan, H.~Pag\`es, V.~Obenchain, and N.~Hayden.
+\newblock {\em {Rsamtools}: Binary alignment ({BAM}), {FASTA}, variant call
+  ({BCF}), and tabix file import}, 2015.
+\newblock R package version 1.19.47.
+
+\bibitem{ObenchainLawrenceCareyGogartenShannonMorgan14}
+V.~Obenchain, M.~Lawrence, V.~Carey, S.~Gogarten, P.~Shannon, and M.~Morgan.
+\newblock {VariantAnnotation}: a {Bioconductor} package for exploration and
+  annotation of genetic variants.
+\newblock {\em Bioinformatics}, 30(14):2076--2078, 2014.
+
+\bibitem{WuLeeCaiLiBoehnkeLin11}
+M.~C. Wu, S.~Lee, T.~Cai, Y.~Li, M.~Boehnke, and X.~Lin.
+\newblock Rare-variant association testing for sequencing data with the
+  sequence kernel association test.
+\newblock {\em Am. J. Hum. Genet.}, 89(1):82--93, 2011.
+
+\end{thebibliography}
+\end{document}

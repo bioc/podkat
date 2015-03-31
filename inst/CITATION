@@ -1,0 +1,23 @@
+citHeader("To cite package 'podkat' in publications use:")
+
+desc <- packageDescription("podkat")
+year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", desc$Date)
+vers <- paste("R package version", desc$Version)
+url  <- desc$URL
+
+citEntry(entry="Manual",
+         title = paste("PODKAT - An R Package for Association Testing",
+                       "Involving Rare and Private Variants"),
+         author = personList(as.person("Ulrich Bodenhofer")),
+         year = year,
+         note = vers,
+         organization=paste("Institute of Bioinformatics",
+                            "Johannes Kepler University", sep=", "),
+         address="Linz, Austria",
+         url=url,
+         textVersion =
+             paste("Ulrich Bodenhofer (", year, "). ",
+                   "PODKAT - An R Package for Association Testing Involving ",
+                   "Rare and Private Variants",
+                   vers, ".", sep="")
+)

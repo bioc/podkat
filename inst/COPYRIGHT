@@ -1,0 +1,11 @@
+This R package includes one C++ source file not written by the package authors:
+
+--------------------------------------------------------------------------------
+src/qfc.cpp:
+
+This file is part of the R package 'CompQuadForm'. Its copyright is held by
+the package author P. Lafaye de Micheaux <lafaye@dms.umontreal.ca>.
+The 'CompQuadForm' package is distributed under the GNU General Public License
+Version 3. 
+
+--------------------------------------------------------------------------------

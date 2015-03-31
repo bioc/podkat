@@ -1,0 +1,42 @@
+Package: podkat
+Type: Package
+Title: Position-Dependent Kernel Association Test
+Version: 0.99.0
+Date: 2015-03-23
+Author: Ulrich Bodenhofer
+Maintainer: Ulrich Bodenhofer <podkat@bioinf.jku.at>
+Description: This package provides an association test that is capable
+        of dealing with very rare and even private variants. This is
+        accomplished by a kernel-based approach that takes the
+        positions of the variants into account. The test can be used
+        for pre-processed matrix data, but also directly for variant
+        data stored in VCF files. Association testing can be performed
+        whole-genome, whole-exome, or restricted to pre-defined regions
+        of interest. The test is complemented by tools for analyzing
+        and visualizing the results.
+URL: http://www.bioinf.jku.at/software/podkat/
+License: GPL (>= 2)
+Depends: R (>= 3.2.0), methods, Rsamtools, GenomicRanges
+Imports: Rcpp (>= 0.11.1), parallel, stats, graphics, Biobase,
+        BiocGenerics, Matrix, GenomeInfoDb, IRanges, Biostrings,
+        BSgenome (>= 1.32.0)
+Suggests: BSgenome.Hsapiens.UCSC.hg38.masked,
+        TxDb.Hsapiens.UCSC.hg38.knownGene,
+        BSgenome.Mmusculus.UCSC.mm10.masked, GWASTools (>= 1.13.24),
+        VariantAnnotation, knitr
+LinkingTo: Rcpp, Rsamtools
+VignetteBuilder: knitr
+Collate: AllGenerics.R AllClasses.R inputChecks.R sort-methods.R
+        show-methods.R print-methods.R summary-methods.R
+        p.adjust-methods.R c-methods.R access-methods.R
+        coerce-methods.R resampling.R unmaskedRegions.R
+        partitionRegions-methods.R genotypeMatrix-methods.R
+        computeKernel.R computePvalues.R readGenotypeMatrix-methods.R
+        readVariantInfo-methods.R readSampleNamesFromVcfHeader.R
+        readRegionsFromBedFile.R weightFuncs.R assocTest-methods.R
+        nullModel-methods.R qqplot-methods.R plot-methods.R
+        filterResult-methods.R split-methods.R computeWeights.R
+        weights-methods.R
+biocViews: Genetics, WholeGenome, Annotation, VariantAnnotation,
+        Sequencing, DataImport
+NeedsCompilation: yes

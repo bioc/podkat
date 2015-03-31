@@ -1,0 +1,27 @@
+useDynLib(podkat)
+
+import(Rcpp)
+import(methods)
+importFrom(stats, qqplot, p.adjust, p.adjust.methods)
+importFrom(graphics, plot)
+importFrom(parallel, makePSOCKcluster, stopCluster)
+importFrom(BiocGenerics, unlist, clusterApplyLB, clusterEvalQ,
+           clusterExport, weights)
+import(Biobase)
+import(Rsamtools)
+import(Matrix)
+import(GenomeInfoDb)
+importFrom(IRanges, IRanges, active, "active<-", "%over%")
+import(GenomicRanges)
+import(Biostrings)
+importFrom(BSgenome, BSgenome, MaskedBSgenome)
+
+export(computeKernel, unmaskedRegions, readSampleNamesFromVcfHeader,
+       readRegionsFromBedFile, betaWeights, logisticWeights, invSdWeights)
+exportClasses(NullModel, AssocTestResult, AssocTestResultRanges,
+              VariantInfo, GenotypeMatrix)
+exportMethods(show, summary, print, nullModel, assocTest, p.adjust,
+              variantInfo, MAF,
+              genotypeMatrix, readGenotypeMatrix, readVariantInfo,
+              partitionRegions, filterResult, qqplot, plot, sort, c,
+              "[", residuals, coefficients, split, weights, names)
