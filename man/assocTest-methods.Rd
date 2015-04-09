@@ -31,7 +31,8 @@
           MAF.action=c("invert", "omit", "ignore"),
           sex=NULL, weightFunc=betaWeights(), width=1000,
           method=NULL, adj=c("automatic", "none", "force"),
-          pValueLimit=(0.1 / length(ranges)), displayProgress=TRUE)
+          pValueLimit=(0.1 / length(ranges)), tmpdir=tempdir(),
+          displayProgress=TRUE)
 \S4method{assocTest}{character,NullModel}(Z, model, ...)
 }
 \arguments{
@@ -149,6 +150,15 @@
     doubled before further processing. This is designed for mixed-sex
     analyses of the X chromosome outside of the pseudoautosomal
     regions.}
+  \item{tmpdir}{if computations are parallelized over multiple client
+    processes (see arguments \code{nnodes} and \code{cl}), the exchange
+    of the null model object between the master process and the client
+    processes is done via a temporary file. The \code{tmpdir} argument
+    allows to specify into which directory the temporary file should be
+    saved. On multi-core systems, the default should be sufficient.
+    If the computations are distributed over a custom cluster,
+    the \code{tmpdir} argument needs to be chosen such that all clients
+    can access it via the same path.}
   \item{displayProgress}{if \code{TRUE} (default) and if \code{ranges} is a
     \code{\linkS4class{GRangesList}}, a progress message is printed
     upon completion of each list component (typically consisting of

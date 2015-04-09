@@ -1688,7 +1688,13 @@ with \PODKAT, however, only under the following two conditions:
     R processes (master and clients). This can be accomplished by (1) storing
     a copy of the VCF file on each machine at exactly the same location or (2)
     by sharing the file between all machines over the network or, in the ideal
-    case, within a clustered file system.
+    case, within a clustered file system. Moreover, when \verb+assocTest()+
+    distributes its computations over multiple client processes, the exchange
+    of the null model object between the master process and the client processes
+    is done via a temporary file. This file must reside in a directory that
+    is accessible with exactly the same path from all clients. For details
+    on how to ensure that, see \verb+?assocTest+ for details (\verb+tmpdir+
+    argument).
 \end{enumerate}
 As said, it is in principle possible to distribute association tests over
 multiple machines, however, it is more convenient and more efficient to

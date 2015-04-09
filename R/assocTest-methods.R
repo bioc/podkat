@@ -586,7 +586,12 @@ assocTest.TabixFileWorker <- function(ranges, file, model, kernel, subset,
         return(out)
 
     if (is.character(model))
-        load(model)
+    {
+        if (exists("model", envir=globalenv()))
+            model <- .GlobalEnv$model
+        else
+            stop("'model' not available on client node", call.=FALSE)
+    }
 
     chr <- vcf$seqnames
     pos <- vcf$pos
@@ -655,6 +660,7 @@ assocTest.TabixFile <- function(Z, model, ranges,
                                 method=NULL,
                                 adj=c("automatic", "none", "force"),
                                 pValueLimit=(0.1 / length(ranges)),
+                                tmpdir=tempdir(),
                                 displayProgress=TRUE)
 {
     ## input checks
@@ -941,8 +947,11 @@ assocTest.TabixFile <- function(Z, model, ranges,
         func <- function(indices, ...)
             assocTest.TabixFileWorker(ranges[indices], ...)
 
-        tmpfile <- tempfile(pattern="model", tmpdir=tempdir(), fileext=".RData")
+        tmpfile <- tempfile(pattern="model", tmpdir=tmpdir, fileext=".RData")
         save(model, file=tmpfile)
+
+        ret <- clusterCall(cl, function(x) load(file=x, envir=globalenv()),
+                           tmpfile)
 
         mcols(ranges) <- do.call(rbind,
                                  clusterApplyLB(cl, indexList, func, file=Z,

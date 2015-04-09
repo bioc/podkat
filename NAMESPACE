@@ -6,7 +6,7 @@ importFrom(stats, qqplot, p.adjust, p.adjust.methods)
 importFrom(graphics, plot)
 importFrom(parallel, makePSOCKcluster, stopCluster)
 importFrom(BiocGenerics, unlist, clusterApplyLB, clusterEvalQ,
-           clusterExport, weights)
+           clusterExport, weights, clusterCall)
 import(Biobase)
 import(Rsamtools)
 import(Matrix)
