@@ -17,7 +17,7 @@ setMethod("filterResult", signature(object="AssocTestResultRanges"),
 
 filterResult.GRanges <- function(object, cutoff=0.1)
 {
-    if (length(mcols(object)$weight.contribution) == 0)
+    if (is.null(mcols(object)$weight.contribution))
         stop("'object' has no metadata column 'weight.contribution'",
                 call.=FALSE)
     else
