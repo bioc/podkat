@@ -218,6 +218,14 @@ weights.AssocTestResultRanges.TabixFile <- function(object, Z, model, sex=NULL)
 setMethod("weights", signature(object="AssocTestResultRanges"),
     function(object, Z, model, limit=20, sex=NULL)
     {
+        if (length(object) == 0)
+        {
+            out <- GRangesList()
+            mcols(out) <- list(weight.raw=numeric(),
+                               weight.contribution=numeric())
+            return(out)
+        }
+
         if (substr(object@kernel, 1, 6) != "linear")
             stop("variant contributions can only be computed for ",
                  "kernels \"linear.podkat\" and \"linear.SKAT\"",
