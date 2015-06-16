@@ -1,6 +1,9 @@
 Change history of package podkat:
 =================================
 
+Version 1.0.3:
+- further fix of weights() method for signature 'AssocTestResultRanges'
+
 Version 1.0.2:
 - fix of weights() method for signature 'AssocTestResultRanges'
 

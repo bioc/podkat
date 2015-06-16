@@ -72,7 +72,12 @@ weights.AssocTestResultRanges.GenotypeMatrix <- function(object, Z, model)
         weights <- object@weights
     }
     else if (is.function(object@weights))
-        weights <- object@weights(MAF(Z))
+    {
+        if (length(MAF(Z)) > 0)
+            weights <- object@weights(MAF(Z))
+        else
+            weights <- numeric()
+    }
 
     ## check for correct order of samples
     if (length(rownames(Z)) > 0 && length(names(model@residuals)) > 0)

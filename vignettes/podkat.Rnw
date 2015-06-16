@@ -72,6 +72,7 @@ podkatDate <- paste(month.name[podkatDateMonth], " ",
 @
 \newcommand{\PODKATVer}{\Sexpr{podkatVersion}}
 \newcommand{\PODKATDate}{\Sexpr{podkatDate}}
+\newcommand{\PODKATYear}{\Sexpr{podkatDateYear}}
 \manualtitlepage[Version \PODKATVer, \PODKATDate]
 
 \section*{Scope and Purpose of this Document}
@@ -638,7 +639,7 @@ times as much time:
 \end{alltt}
 \begin{verbatim}
 ##!!## GRangesList object of length 2:
-##!!## $chr21 
+##!!## $chr21
 ##!!## GRanges object with 3997 ranges and 0 metadata columns:
 ##!!##          seqnames               ranges strand
 ##!!##             <Rle>            <IRanges>  <Rle>
@@ -653,7 +654,7 @@ times as much time:
 ##!!##   [3995]    chr21 [46661223, 46681222]      *
 ##!!##   [3996]    chr21 [46671223, 46691222]      *
 ##!!##   [3997]    chr21 [46681223, 46699983]      *
-##!!## 
+##!!##
 ##!!## ...
 ##!!## <1 more element>
 ##!!## -------
@@ -852,7 +853,7 @@ alpha example again, this time using \verb+biomaRt+:
 ##!!## 4        HBA2              16         172847       173710
 ##!!##         ucsc
 ##!!## 1 uc002cfx.1
-##!!## 2           
+##!!## 2
 ##!!## 3 uc002cfv.4
 ##!!## 4
 \end{verbatim}
@@ -1597,13 +1598,13 @@ to a number larger than 1:
 \end{alltt}
 \begin{verbatim}
 ##!!## Overview of association test:
-##!!## 	Null model: logistic 
-##!!## 	Number of samples: 200 
-##!!## 	Number of regions: 79 
-##!!## 	Number of regions without variants: 0 
-##!!## 	Average number of variants in regions: 24.1 
-##!!## 	Genome: hgA 
-##!!## 	Kernel: linear.podkat 
+##!!## 	Null model: logistic
+##!!## 	Number of samples: 200
+##!!## 	Number of regions: 79
+##!!## 	Number of regions without variants: 0
+##!!## 	Average number of variants in regions: 24.1
+##!!## 	Genome: hgA
+##!!## 	Kernel: linear.podkat
 ##!!## 	p-value adjustment: none
 \end{verbatim}
 \end{kframe}
@@ -1632,13 +1633,13 @@ the cluster:
 \end{alltt}
 \begin{verbatim}
 ##!!## Overview of association test:
-##!!## 	Null model: logistic 
-##!!## 	Number of samples: 200 
-##!!## 	Number of regions: 79 
-##!!## 	Number of regions without variants: 0 
-##!!## 	Average number of variants in regions: 24.1 
-##!!## 	Genome: hgA 
-##!!## 	Kernel: linear.podkat 
+##!!## 	Null model: logistic
+##!!## 	Number of samples: 200
+##!!## 	Number of regions: 79
+##!!## 	Number of regions without variants: 0
+##!!## 	Average number of variants in regions: 24.1
+##!!## 	Genome: hgA
+##!!## 	Kernel: linear.podkat
 ##!!## 	p-value adjustment: none
 \end{verbatim}
 \begin{alltt}
@@ -1646,13 +1647,13 @@ the cluster:
 \end{alltt}
 \begin{verbatim}
 ##!!## Overview of association test:
-##!!## 	Null model: linear 
-##!!## 	Number of samples: 200 
-##!!## 	Number of regions: 79 
-##!!## 	Number of regions without variants: 0 
-##!!## 	Average number of variants in regions: 24.1 
-##!!## 	Genome: hgA 
-##!!## 	Kernel: linear.podkat 
+##!!## 	Null model: linear
+##!!## 	Number of samples: 200
+##!!## 	Number of regions: 79
+##!!## 	Number of regions without variants: 0
+##!!## 	Average number of variants in regions: 24.1
+##!!## 	Genome: hgA
+##!!## 	Kernel: linear.podkat
 ##!!## 	p-value adjustment: none
 \end{verbatim}
 \begin{alltt}
@@ -2520,7 +2521,21 @@ package:
 \section{Change Log}\label{sec:chLog}
 
 \begin{description}
-\item[Version 0.99.0:] first version submitted to Bioconductor
+\item[Version 1.0.3:]\hfill\mbox{ }
+  \begin{itemize}
+  \item further fix of \verb+weights()+ method for signature
+    `\verb+AssocTestResultRanges+'
+  \end{itemize}
+\item[Version 1.0.2:]\hfill\mbox{ }
+  \begin{itemize}
+  \item fix of \verb+weights()+ method for signature
+    `\verb+AssocTestResultRanges+'
+  \end{itemize}
+\item[Version 1.0.1:]\hfill\mbox{ }
+  \begin{itemize}
+  \item fix of \verb+filterResults()+ method for signature `\verb+GRanges+'
+  \end{itemize}
+\item[Version 1.0.0:] first official release as part of Bioconductor 3.1
 \end{description}
 
 \section{How to Cite This Package}\label{sec:cite}
@@ -2528,9 +2543,9 @@ package:
 If you use this package for research that is published later, you are kindly
 asked to cite it as follows:
 \begin{quotation}
-\noindent U.\ Bodenhofer (2015).
+\noindent U.\ Bodenhofer (\PODKATYear).
 {\em PODKAT: an R package for association testing involving rare and private
-variants.} R package version 0.99.0.
+variants.} R package version \PODKATVer.
 \end{quotation}
 
 %\bibliographystyle{plain}
