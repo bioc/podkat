@@ -147,6 +147,10 @@ readVariantInfo.TabixFile <- function(file, regions, subset,
 setMethod("readVariantInfo", signature(file="TabixFile", regions="GRanges"),
     readVariantInfo.TabixFile)
 
+setMethod("readVariantInfo", signature(file="character", regions="GRanges"),
+    function(file, regions, ...) readVariantInfo(TabixFile(file), regions,
+                                                 ...))
+
 setMethod("readVariantInfo", signature(file="TabixFile", regions="missing"),
     function(file, regions, ...) readVariantInfo(file, GRanges(), ...))
 

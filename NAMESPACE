@@ -2,8 +2,13 @@ useDynLib(podkat)
 
 import(Rcpp)
 import(methods)
-importFrom(stats, qqplot, p.adjust, p.adjust.methods)
-importFrom(graphics, plot)
+importFrom(stats, qqplot, p.adjust, p.adjust.methods, dbeta,
+           glm, lm, median, model.frame, model.matrix, model.response,
+           na.omit, pchisq, ppoints, rbinom, residuals, rnorm, var)
+importFrom(graphics, plot, abline, axTicks, axis, box, mtext,
+           par, points, segments, text)
+importFrom(grDevices, col2rgb, rainbow, rgb)
+importFrom(utils, read.table)
 importFrom(parallel, makePSOCKcluster, stopCluster)
 importFrom(BiocGenerics, unlist, clusterApplyLB, clusterEvalQ,
            clusterExport, weights, clusterCall)
@@ -25,3 +30,4 @@ exportMethods(show, summary, print, nullModel, assocTest, p.adjust,
               genotypeMatrix, readGenotypeMatrix, readVariantInfo,
               partitionRegions, filterResult, qqplot, plot, sort, c,
               "[", residuals, coefficients, split, weights, names)
+

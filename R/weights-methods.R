@@ -108,7 +108,7 @@ weights.AssocTestResultRanges.GenotypeMatrix <- function(object, Z, model)
             res <- variantInfo(Z)[sel]
             mcols(res) <- NULL
 
-            w <- computeWeights(Z[, sel], residuals(model),
+            w <- computeWeights(Z[, sel], model@residuals,
                                 kernel=object@kernel, weights[sel],
                                 object@width)
             w2 <- w^2

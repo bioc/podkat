@@ -2521,6 +2521,14 @@ package:
 \section{Change Log}\label{sec:chLog}
 
 \begin{description}
+\item[Version 1.3.1:]\hfill\mbox{ }
+  \begin{itemize}
+  \item added missing method \verb+readVariantInfo()+ for signature
+  `\verb+character+', `\verb+GRanges+'
+  \item minor streamlining of source code of \verb+readGenotypeMatrix()+
+  \item corrections of namespace imports
+  \end{itemize}
+\item[Version 1.3.0:] new branch for Bioconductor 3.3 devel
 \item[Version 1.1.3:]\hfill\mbox{ }
   \begin{itemize}
   \item further fix of \verb+weights()+ method for signature
