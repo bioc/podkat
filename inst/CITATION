@@ -1,9 +1,11 @@
 citHeader("To cite package 'podkat' in publications use:")
 
-desc <- packageDescription("podkat")
-year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", desc$Date)
-vers <- paste("R package version", desc$Version)
-url  <- desc$URL
+if (!exists("meta") || is.null(meta))
+    meta <- packageDescription("procoil")
+
+year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date)
+vers <- paste("R package version", meta$Version)
+url  <- meta$URL
 
 citEntry(entry="Manual",
          title = paste("PODKAT - An R Package for Association Testing",

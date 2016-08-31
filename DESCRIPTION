@@ -1,8 +1,8 @@
 Package: podkat
 Type: Package
 Title: Position-Dependent Kernel Association Test
-Version: 1.5.2
-Date: 2016-04-12
+Version: 1.5.3
+Date: 2016-08-31
 Author: Ulrich Bodenhofer
 Maintainer: Ulrich Bodenhofer <bodenhofer@bioinf.jku.at>
 Description: This package provides an association test that is capable
@@ -23,7 +23,7 @@ Imports: Rcpp (>= 0.11.1), parallel, stats, graphics, grDevices, utils,
 Suggests: BSgenome.Hsapiens.UCSC.hg38.masked,
         TxDb.Hsapiens.UCSC.hg38.knownGene,
         BSgenome.Mmusculus.UCSC.mm10.masked, GWASTools (>= 1.13.24),
-        VariantAnnotation, knitr
+        VariantAnnotation, SummarizedExperiment, knitr
 LinkingTo: Rcpp, Rsamtools
 VignetteBuilder: knitr
 Collate: AllGenerics.R AllClasses.R inputChecks.R sort-methods.R

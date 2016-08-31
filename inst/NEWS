@@ -1,6 +1,27 @@
 Change history of package podkat:
 =================================
 
+Version 1.5.3:
+- readRegionsFromBedFile() now allows for including metadata columns
+- corresponding changes in documentation
+- fix of call to method rowRanges() into suggested package
+- fix of citation info file
+- fix of inst/NEWS
+
+Version 1.5.2:
+- version number bump for technical reasons related to Bioconductor
+  build servers
+
+Version 1.5.1:
+- version number bump for technical reasons related to Bioconductor
+  build servers
+
+Version 1.5.0:
+- new branch for Bioconductor 3.4 devel
+
+Version 1.4.0:
+- release as part of Bioconductor 3.3
+
 Version 1.3.1:
 - added missing method readVariantInfo() for signature
   'character', 'GRanges'
@@ -9,6 +30,9 @@ Version 1.3.1:
 
 Version 1.3.0:
 - new branch for Bioconductor 3.3 devel
+
+Version 1.2.0:
+- release as part of Bioconductor 3.2
 
 Version 1.1.3:
 - further fix of weights() method for signature 'AssocTestResultRanges'

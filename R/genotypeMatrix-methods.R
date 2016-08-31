@@ -333,6 +333,8 @@ genotypeMatrix.ANY <- function(Z, pos, seqnames, subset,
              "class 'VCF' (package 'VariantAnnotation')", call.=FALSE)
     else if (!requireNamespace("VariantAnnotation", quietly=TRUE))
         stop("could not load package 'VariantAnnotation'")
+    else if (!requireNamespace("SummarizedExperiment", quietly=TRUE))
+        stop("could not load package 'SummarizedExperiment'")
 
     if (length(VariantAnnotation::geno(Z)) == 0 ||
         length(VariantAnnotation::geno(Z)$GT) == 0)
@@ -450,8 +452,8 @@ genotypeMatrix.ANY <- function(Z, pos, seqnames, subset,
         else
             mat <- t(VariantAnnotation::geno(Z)$GT[, subset, drop=FALSE])
 
-        gr <- GRanges(seqnames=rowRanges(Z)@seqnames,
-                      ranges=rowRanges(Z)@ranges)
+        gr <- GRanges(seqnames=SummarizedExperiment::rowRanges(Z)@seqnames,
+                      ranges=SummarizedExperiment::rowRanges(Z)@ranges)
     }
     else
     {
@@ -460,13 +462,14 @@ genotypeMatrix.ANY <- function(Z, pos, seqnames, subset,
         else
             mat <- t(VariantAnnotation::geno(Z)$GT[vSubset, subset, drop=FALSE])
 
-        gr <- GRanges(seqnames=rowRanges(Z)@seqnames[vSubset],
-                      ranges=rowRanges(Z)@ranges[vSubset])
+        gr <-
+            GRanges(seqnames=SummarizedExperiment::rowRanges(Z)@seqnames[vSubset],
+                    ranges=SummarizedExperiment::rowRanges(Z)@ranges[vSubset])
     }
 
-    seqlevels(gr) <- seqlevels(rowRanges(Z))
-    seqlengths(gr) <- seqlengths(rowRanges(Z))
-    genome(gr) <- genome(rowRanges(Z))
+    seqlevels(gr) <- seqlevels(SummarizedExperiment::rowRanges(Z))
+    seqlengths(gr) <- seqlengths(SummarizedExperiment::rowRanges(Z))
+    genome(gr) <- genome(SummarizedExperiment::rowRanges(Z))
 
     genotypeMatrix.Cmatrix.GRanges(mat, gr, ...)
 }

@@ -2,7 +2,7 @@ readRegionsFromBedFile <- function(file, header=FALSE, sep="\t",
                                    col.names=c("chrom", "chromStart",
                                                "chromEnd", "names", "width",
                                                "strand"),
-                                   seqInfo=NULL)
+                                   ignoreMcols=TRUE, seqInfo=NULL)
 {
     df <- read.table(file=file, header=header, sep=sep,
                      stringsAsFactors=FALSE, col.names=col.names)
@@ -19,8 +19,20 @@ readRegionsFromBedFile <- function(file, header=FALSE, sep="\t",
     gr <- GRanges(seqnames=df$chrom,
                   ranges=IRanges(start=df$chromStart, end=df$chromEnd))
 
+    if ("strand" %in% col.names)
+        strand(gr) <- df$strand
+
     if (length(df$names) > 0)
         names(gr) <- df$names
+
+    if (!ignoreMcols)
+    {
+        mCol <- setdiff(colnames(df), c("chrom", "chromStart", "chromEnd",
+                                        "names", "strand", "width"))
+
+        if (length(mCol) > 0)
+            mcols(gr) <- df[, mCol]
+    }
 
     if (!is.null(seqInfo) && is(seqInfo, "Seqinfo"))
     {

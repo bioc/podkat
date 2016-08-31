@@ -9,12 +9,16 @@ readRegionsFromBedFile(file, header=FALSE, sep="\t",
                        col.names=c("chrom", "chromStart",
                                    "chromEnd", "names", "width",
                                    "strand"),
-                       seqInfo=NULL)
+                       ignoreMcols=TRUE, seqInfo=NULL)
 }
 \arguments{
   \item{file}{the name of the file, text-mode connection, or URL to read
     data from}
   \item{header,sep,col.names}{arguments passed on to \code{\link{read.table}}}
+  \item{ignoreMcols}{if \code{TRUE} (default), further columns are
+    ignored; if \code{FALSE}, further columns are appended to the
+    resulting \code{\linkS4class{GRanges}} object as metadata colums
+    (see details below).}
   \item{seqInfo}{can be \code{NULL} (default) or an object of class
     \code{\linkS4class{Seqinfo}} (see details below).}
 }
@@ -29,7 +33,16 @@ readRegionsFromBedFile(file, header=FALSE, sep="\t",
   The function \code{readRegionsFromBedFile} requires columns named
   \dQuote{chrom}, \dQuote{chromStart}, and \dQuote{chromEnd} to be
   present in the object returned from \code{\link{read.table}} upon
-  reading from the BED file. All other columns are ignored anyway.
+  reading from the BED file. If a column named \dQuote{strands} is
+  contained in the BED file, this column is used as strand info in
+  the resulting \code{\linkS4class{GRanges}} object.
+
+  If \code{ignoreMcols=TRUE} (default), further columns are
+  ignored. If \code{ignoreMcols=FALSE}, all columns other than
+  \dQuote{chrom}, \dQuote{chromStart}, \dQuote{chromEnd},
+  \dQuote{names}, \dQuote{strand}, and \dQuote{width} are appended
+  to the resulting \code{\linkS4class{GRanges}} object as metadata
+  columns.
 
   The \code{seqInfo} argument can be used to assign the right metadata,
   such as, genome, chromosome names, and chromosome lengths
