@@ -1,6 +1,10 @@
 Change history of package podkat:
 =================================
 
+Version 1.5.4:
+- fix in vignette code that became necessary because of a change in
+  the hg38 transcript annotation
+
 Version 1.5.3:
 - readRegionsFromBedFile() now allows for including metadata columns
 - corresponding changes in documentation

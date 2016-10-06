@@ -639,7 +639,7 @@ times as much time:
 \end{alltt}
 \begin{verbatim}
 ##!!## GRangesList object of length 2:
-##!!## $chr21
+##!!## $chr21 
 ##!!## GRanges object with 3997 ranges and 0 metadata columns:
 ##!!##          seqnames               ranges strand
 ##!!##             <Rle>            <IRanges>  <Rle>
@@ -654,7 +654,7 @@ times as much time:
 ##!!##   [3995]    chr21 [46661223, 46681222]      *
 ##!!##   [3996]    chr21 [46671223, 46691222]      *
 ##!!##   [3997]    chr21 [46681223, 46699983]      *
-##!!##
+##!!## 
 ##!!## ...
 ##!!## <1 more element>
 ##!!## -------
@@ -701,17 +701,17 @@ from the Illumina\RTM{} website%
 ##!!##      chrY:26980089-26980276:DAZ3     chrY [26980088, 26980276]
 ##!!##                                  strand
 ##!!##                                   <Rle>
-##!!##          chr1:14363-14829:WASH5P      *
-##!!##          chr1:14970-15038:WASH5P      *
-##!!##          chr1:15796-15947:WASH5P      *
-##!!##          chr1:16607-16765:WASH5P      *
-##!!##          chr1:16858-17055:WASH5P      *
+##!!##          chr1:14363-14829:WASH5P      +
+##!!##          chr1:14970-15038:WASH5P      +
+##!!##          chr1:15796-15947:WASH5P      +
+##!!##          chr1:16607-16765:WASH5P      +
+##!!##          chr1:16858-17055:WASH5P      +
 ##!!##                              ...    ...
-##!!##   chrY:24457542-24457645:RBMY2FP      *
-##!!##   chrY:24460640-24462350:RBMY2FP      *
-##!!##    chrY:24549623-24549729:RBMY1J      *
-##!!##      chrY:26980008-26980063:DAZ2      *
-##!!##      chrY:26980089-26980276:DAZ3      *
+##!!##   chrY:24457542-24457645:RBMY2FP      +
+##!!##   chrY:24460640-24462350:RBMY2FP      +
+##!!##    chrY:24549623-24549729:RBMY1J      +
+##!!##      chrY:26980008-26980063:DAZ2      +
+##!!##      chrY:26980089-26980276:DAZ3      +
 ##!!##   -------
 ##!!##   seqinfo: 24 sequences from an unspecified genome; no seqlengths
 \end{verbatim}
@@ -818,12 +818,12 @@ hbaGenes
 Another variant is to use the \verb+TxDb.Hsapiens.UCSC.hg38.knownGene+ package
 to access the genes' locations. In order to do that,
 we have to take into account that the corresponding transcripts have
-the UCSC IDs \verb+uc002cfx.1+ and\verb+uc002cfv.4+ (which
+the UCSC IDs \verb+uc002cfx.2+ and\verb+uc002cfv.4+ (which
 enable us to select the right regions by searching for these IDs in the
 \verb+tx_name+ metadata column):
 <<HBAGenesManualTxDb>>=
 hbaGenes <- hg38tr[which(mcols(hg38tr)$tx_name %in%
-                         c("uc002cfx.1", "uc002cfv.4"))]
+                         c("uc002cfx.2", "uc002cfv.4"))]
 names(hbaGenes) <- c("HBA1", "HBA2")
 hbaGenes
 @
@@ -849,13 +849,21 @@ alpha example again, this time using \verb+biomaRt+:
 ##!!##   hgnc_symbol chromosome_name start_position end_position
 ##!!## 1        HBA1              16         176680       177522
 ##!!## 2        HBA1              16         176680       177522
-##!!## 3        HBA2              16         172847       173710
-##!!## 4        HBA2              16         172847       173710
+##!!## 3        HBA1              16         176680       177522
+##!!## 4        HBA1              16         176680       177522
+##!!## 5        HBA2              16         172847       173710
+##!!## 6        HBA2              16         172847       173710
+##!!## 7        HBA2              16         172847       173710
+##!!## 8        HBA2              16         172847       173710
 ##!!##         ucsc
-##!!## 1 uc002cfx.1
-##!!## 2
-##!!## 3 uc002cfv.4
-##!!## 4
+##!!## 1 uc002cfx.2
+##!!## 2 uc059ohb.1
+##!!## 3 uc059ohc.1
+##!!## 4 uc059ohd.1
+##!!## 5 uc002cfv.4
+##!!## 6 uc059ogy.1
+##!!## 7 uc059ogz.1
+##!!## 8 uc059oha.1
 \end{verbatim}
 \begin{alltt}
 \hlstd{hbaGenes} \hlkwb{<-} \hlkwd{GRanges}\hlstd{(}\hlkwc{seqnames}\hlstd{=}\hlkwd{paste0}\hlstd{(}\hlstr{"chr"}\hlstd{, res}\hlopt{$}\hlstd{chromosome_name),}
@@ -865,11 +873,15 @@ alpha example again, this time using \verb+biomaRt+:
 \hlstd{hbaGenes}
 \end{alltt}
 \begin{verbatim}
-##!!## GRanges object with 4 ranges and 0 metadata columns:
+##!!## GRanges object with 8 ranges and 0 metadata columns:
 ##!!##        seqnames           ranges strand
 ##!!##           <Rle>        <IRanges>  <Rle>
 ##!!##   HBA1    chr16 [176680, 177522]      *
 ##!!##   HBA1    chr16 [176680, 177522]      *
+##!!##   HBA1    chr16 [176680, 177522]      *
+##!!##   HBA1    chr16 [176680, 177522]      *
+##!!##   HBA2    chr16 [172847, 173710]      *
+##!!##   HBA2    chr16 [172847, 173710]      *
 ##!!##   HBA2    chr16 [172847, 173710]      *
 ##!!##   HBA2    chr16 [172847, 173710]      *
 ##!!##   -------
@@ -1598,13 +1610,13 @@ to a number larger than 1:
 \end{alltt}
 \begin{verbatim}
 ##!!## Overview of association test:
-##!!## 	Null model: logistic
-##!!## 	Number of samples: 200
-##!!## 	Number of regions: 79
-##!!## 	Number of regions without variants: 0
-##!!## 	Average number of variants in regions: 24.1
-##!!## 	Genome: hgA
-##!!## 	Kernel: linear.podkat
+##!!## 	Null model: logistic 
+##!!## 	Number of samples: 200 
+##!!## 	Number of regions: 79 
+##!!## 	Number of regions without variants: 0 
+##!!## 	Average number of variants in regions: 24.1 
+##!!## 	Genome: hgA 
+##!!## 	Kernel: linear.podkat 
 ##!!## 	p-value adjustment: none
 \end{verbatim}
 \end{kframe}
@@ -1633,13 +1645,13 @@ the cluster:
 \end{alltt}
 \begin{verbatim}
 ##!!## Overview of association test:
-##!!## 	Null model: logistic
-##!!## 	Number of samples: 200
-##!!## 	Number of regions: 79
-##!!## 	Number of regions without variants: 0
-##!!## 	Average number of variants in regions: 24.1
-##!!## 	Genome: hgA
-##!!## 	Kernel: linear.podkat
+##!!## 	Null model: logistic 
+##!!## 	Number of samples: 200 
+##!!## 	Number of regions: 79 
+##!!## 	Number of regions without variants: 0 
+##!!## 	Average number of variants in regions: 24.1 
+##!!## 	Genome: hgA 
+##!!## 	Kernel: linear.podkat 
 ##!!## 	p-value adjustment: none
 \end{verbatim}
 \begin{alltt}
@@ -1647,13 +1659,13 @@ the cluster:
 \end{alltt}
 \begin{verbatim}
 ##!!## Overview of association test:
-##!!## 	Null model: linear
-##!!## 	Number of samples: 200
-##!!## 	Number of regions: 79
-##!!## 	Number of regions without variants: 0
-##!!## 	Average number of variants in regions: 24.1
-##!!## 	Genome: hgA
-##!!## 	Kernel: linear.podkat
+##!!## 	Null model: linear 
+##!!## 	Number of samples: 200 
+##!!## 	Number of regions: 79 
+##!!## 	Number of regions without variants: 0 
+##!!## 	Average number of variants in regions: 24.1 
+##!!## 	Genome: hgA 
+##!!## 	Kernel: linear.podkat 
 ##!!## 	p-value adjustment: none
 \end{verbatim}
 \begin{alltt}
@@ -2521,6 +2533,12 @@ package:
 \section{Change Log}\label{sec:chLog}
 
 \begin{description}
+\item[Version 1.6.0:] release as part of Bioconductor 3.4
+\item[Version 1.5.4:] \hfill
+\begin{itemize}
+\item fix in vignette code that became necessary because of a change in
+  the hg38 transcript annotation
+\end{itemize}
 \item[Version 1.5.3:] \hfill
 \begin{itemize}
 \item \verb+readRegionsFromBedFile()+ now allows for including metadata columns
