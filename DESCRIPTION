@@ -15,6 +15,7 @@ Description: This package provides an association test that is capable
         of interest. The test is complemented by tools for analyzing
         and visualizing the results.
 URL: http://www.bioinf.jku.at/software/podkat/
+     https://github.com/UBod/podkat
 License: GPL (>= 2)
 Depends: R (>= 3.2.0), methods, Rsamtools, GenomicRanges
 Imports: Rcpp (>= 0.11.1), parallel, stats, graphics, grDevices, utils,
