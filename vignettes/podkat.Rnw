@@ -192,8 +192,9 @@ The \PODKAT\ \R\ package (current version: \PODKATVer) is
 available via Bioconductor. The simplest way to install the package
 is the following:
 <<InstallPODKAT,eval=FALSE>>=
-source("http://www.bioconductor.org/biocLite.R")
-biocLite("podkat")
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("podkat")
 @
 
 If you wish to install the package manually instead, you can download
