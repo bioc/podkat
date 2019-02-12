@@ -4,7 +4,8 @@
 #include <vector>
 #include <string>
 
-#include <tabix/tabix.h>
+#include <htslib/tbx.h>
+#include <htslib/bgzf.h>
 
 using namespace Rcpp;
 using namespace std;
@@ -23,13 +24,71 @@ using namespace std;
 /* Some definitions copied from Rsamtools                                  */
 /*-------------------------------------------------------------------------*/
 
-typedef struct
-{
-    tabix_t *tabix;
-    ti_iter_t iter;
+typedef struct {
+    htsFile *file;
+    tbx_t *index;
+    hts_itr_t *iter;
 } _TABIX_FILE;
 
 #define TABIXFILE(b) ((_TABIX_FILE *) R_ExternalPtrAddr(b))
+
+static int64_t _tbx_tell(htsFile *file)
+{
+    BGZF *fp;
+
+    if (!file->is_bgzf)
+        Rf_error("[internal] hmm.. this doesn't look like a tabix file, sorry");
+    fp = file->fp.bgzf;
+    return bgzf_tell(fp);
+}
+static void _tbx_seek(htsFile *file, int64_t offset)
+{
+    BGZF *fp;
+
+    if (!file->is_bgzf)
+        Rf_error("[internal] hmm.. this doesn't look like a tabix file, sorry");
+    fp = file->fp.bgzf;
+    if (bgzf_seek(fp, offset, SEEK_SET) < 0)
+        Rf_error("[internal] bgzf_seek() failed");
+    return;
+}
+static const char *_tbx_read_line(htsFile *file, int *len)
+{
+    BGZF *fp;
+    static kstring_t ksbuf = {0, 0, NULL};
+
+    if (!file->is_bgzf)
+        Rf_error("[internal] hmm.. this doesn't look like a tabix file, sorry");
+    fp = file->fp.bgzf;
+    if (bgzf_getline(fp, '\n', &ksbuf) < 0)
+        return NULL;
+    *len = ksbuf.l;
+    return ksbuf.s;
+}
+static const char *_tbx_read_next_rec(htsFile *file, tbx_t *index,
+                                      hts_itr_t *iter, int *len)
+{
+    static kstring_t ksbuf = {0, 0, NULL};
+
+    if (tbx_itr_next(file, index, iter, &ksbuf) < 0)
+        return NULL;
+    *len = ksbuf.l;
+    return ksbuf.s;
+}
+static void _skip_header_lines(htsFile *file, const tbx_conf_t *conf)
+{
+    const char *line;
+    int linelen;
+
+    int64_t curr_off = _tbx_tell(file);
+    while ((line = _tbx_read_line(file, &linelen)) != NULL) {
+        if (line[0] != conf->meta_char)
+            break;
+        curr_off = _tbx_tell(file);
+    }
+    _tbx_seek(file, curr_off);
+    return;
+}
 
 /*- end of definitions and functions copied from Rsamtools ----------------*/
 
@@ -107,11 +166,11 @@ int determineType(string &ref, string &alt)
 
 
 /*-------------------------------------------------------------------------*/
-/* function that reads line per line of a region and adds the data to      */
+/* function that reads record by record of a region and adds the data to   */
 /*     vectors of descriptors                                              */
 /*-------------------------------------------------------------------------*/
 
-int tabixToInfo(tabix_t *tabix, ti_iter_t iter,
+int tabixToInfo(htsFile *file, tbx_t *index, hts_itr_t *iter,
 		int subsetLen, int *subset, int sexLen, int *sex,
 		bool noIndels, bool onlyPass,
 		double NAlimit, double MAFlimit, int NAaction, int MAFaction,
@@ -123,17 +182,13 @@ int tabixToInfo(tabix_t *tabix, ti_iter_t iter,
 {
     int linelen;
     const char *line;
-    const ti_conf_t *conf = ti_get_conf(tabix->idx);
+    const tbx_conf_t conf = index->conf;
     double colMAF, colNA;
     vector<int> entryBuffer, ploidy;
 
-    // read from tabix stream line by line
-    while (NULL != (line = ti_read(tabix, iter, &linelen)))
-    {
-	if (tabix->fp->errcode)
-	    return ERR_READLINE;
-
-	if (conf->meta_char == *line)
+    // read from tabix stream record by record
+    while ((line = _tbx_read_next_rec(file, index, iter, &linelen)) != NULL) {
+        if (line[0] == conf.meta_char)
             continue;
 
 	int spos;
@@ -325,25 +380,27 @@ RcppExport SEXP readVariantInfo(SEXP ext, SEXP seqnamesR, SEXP startR,
     int MAFaction = as<int>(MAFactionR);
     bool omitZeroMAF = as<bool>(omitZeroMAFR);
     bool refAlt = as<bool>(refAltR);
-    tabix_t *tabix = TABIXFILE(ext)->tabix;
+    _TABIX_FILE *tfile = TABIXFILE(ext);
+    htsFile *file = tfile->file;
+    tbx_t *index = tfile->index;
     vector<string> chrom, names, ref, alt;
     vector<int> pos, type;
     vector<double> MAF;
 
     if (nspc == 0) // no region defined => read entire VCF file
     {
-        ti_iter_t iter = TABIXFILE(ext)->iter;
-
-        if (iter == NULL)
-	{
-            if (ti_lazy_index_load(tabix) != 0)
-                return ERR_RETURN(ERR_INDEXFAIL);
-
-            iter = TABIXFILE(ext)->iter = ti_iter_first();
+        hts_itr_t *iter = tfile->iter;
+        if (iter == NULL) {
+            _skip_header_lines(file, &(index->conf));
+            /* Create iterator that will iterate over all records. */
+            iter = tbx_itr_queryi(index, HTS_IDX_REST, 0, 0);
+            if (iter == NULL)
+                Rf_error("[internal] failed to create tabix iterator");
+            tfile->iter = iter;
         }
-
 	// read VCF into sparse matrix
-        int ret = tabixToInfo(tabix, iter, subset.length(),
+        int ret = tabixToInfo(file, index, iter,
+                              subset.length(),
 			      (subset.length() > 0 ? subset.begin() : NULL),
 			      sex.length(),
 			      (sex.length() > 0 ? sex.begin() : NULL),
@@ -357,26 +414,23 @@ RcppExport SEXP readVariantInfo(SEXP ext, SEXP seqnamesR, SEXP startR,
     }
     else // region(s) specified
     {
-        if (0 != ti_lazy_index_load(tabix))
-            return ERR_RETURN(ERR_INDEXFAIL);
-
         for (int ispc = 0; ispc < nspc; ++ispc) // iterate over regions
 	{
             int ibeg, iend, tid;
-            ti_iter_t iter;
+            hts_itr_t *iter;
 
             ibeg = start[ispc] == 0 ? 0 : start[ispc] - 1;
             iend = end[ispc];
 
-            tid = ti_get_tid(tabix->idx, seqnames[ispc]);
-
-            if (0 > tid)
+            tid = tbx_name2id(index, seqnames[ispc]);
+            if (tid < 0)
                 return ERR_RETURN(ERR_CHRMISSING);
 
-            iter = ti_queryi(tabix, tid, ibeg, iend);
+            iter = tbx_itr_queryi(index, tid, ibeg, iend);
 
 	    // read VCF into matrix (columns accumulate over multiple regions)
-	    int ret = tabixToInfo(tabix, iter, subset.length(),
+	    int ret = tabixToInfo(file, index, iter,
+                                  subset.length(),
 				  (subset.length() > 0 ? subset.begin() : NULL),
 				  sex.length(),
 				  (sex.length() > 0 ? sex.begin() : NULL),
@@ -386,7 +440,7 @@ RcppExport SEXP readVariantInfo(SEXP ext, SEXP seqnamesR, SEXP startR,
 				  names, chrom, pos, type, ref, alt,
 				  MAF, n, m);
 
-            ti_iter_destroy(iter);
+            tbx_itr_destroy(iter);
 
 	    if (ret != ERR_OK)
 		return ERR_RETURN(ret);
