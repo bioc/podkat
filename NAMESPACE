@@ -11,7 +11,7 @@ importFrom(grDevices, col2rgb, rainbow, rgb)
 importFrom(utils, read.table)
 importFrom(parallel, makePSOCKcluster, stopCluster)
 importFrom(BiocGenerics, unlist, clusterApplyLB, clusterEvalQ,
-           clusterExport, weights, clusterCall)
+           clusterExport, weights, clusterCall, path)
 import(Biobase)
 import(Rsamtools)
 import(Matrix)

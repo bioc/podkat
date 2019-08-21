@@ -930,6 +930,10 @@ separate accessor function \verb+MAF()+ for retrieving these MAFs:
 <<MAFs>>=
 summary(MAF(geno))
 @
+Moreover, there is a custom variant of the \verb+summary()+ method:
+<<vInfoSummary>>=
+summary(geno, details=TRUE)
+@
 
 The simplest approach is to perform a test for
 the association between the null model the entire genotype:
@@ -2534,6 +2538,29 @@ package:
 \section{Change Log}\label{sec:chLog}
 
 \begin{description}
+\item[Version 1.17.1:] \hfill
+\begin{itemize}
+\item changed \verb+summary()+ method for \texttt{VariantAnnotation} class
+  in order to stay compatible with \verb+print()+ method in
+  \texttt{GenomicRanges} package
+\item corresponding minor adaptations in documentation and package vignette
+\end{itemize}
+\item[Version 1.17.0:] new branch for Bioconductor 3.10 devel
+\item[Version 1.16.0:] release as part of Bioconductor 3.9
+\item[Version 1.15.1:] \hfill
+\begin{itemize}
+\item changed \texttt{Rsamtools} API to \texttt{Rhtslib} API
+\end{itemize}
+\item[Version 1.5.3:] \hfill
+\item[Version 1.15.0:] new branch for Bioconductor 3.9 devel
+\item[Version 1.14.0:] release as part of Bioconductor 3.8
+\item[Version 1.13.0:] new branch for Bioconductor 3.8 devel
+\item[Version 1.12.0:] release as part of Bioconductor 3.7
+\item[Version 1.11.0:] new branch for Bioconductor 3.7 devel
+\item[Version 1.10.0:] release as part of Bioconductor 3.6
+\item[Version 1.9.0:] new branch for Bioconductor 3.6 devel
+\item[Version 1.8.0:] release as part of Bioconductor 3.5
+\item[Version 1.7.0:] new branch for Bioconductor 3.5 devel
 \item[Version 1.6.0:] release as part of Bioconductor 3.4
 \item[Version 1.5.4:] \hfill
 \begin{itemize}

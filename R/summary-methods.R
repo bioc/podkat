@@ -1,51 +1,66 @@
-summary.VariantInfo <- function(object)
+summary.VariantInfo <- function(object, details=FALSE)
 {
-    cat("Variant info:\n")
-    cat("\tNumber of variants:", length(object), "\n\n")
-
-    res <- list(meanMAF=NA, medianMAF=NA, minMAF=NA, maxMAF=NA, tableTypes=NULL)
-
-    if (length(object) > 0)
+    if (details)
     {
-        MAF <- MAF(object)
+        cat("Variant info:\n")
+        cat("\tNumber of variants:", length(object), "\n\n")
 
-        res$meanMAF   <- mean(MAF, na.rm=TRUE)
-        res$medianMAF <- median(MAF, na.rm=TRUE)
-        res$minMAF    <- min(MAF, na.rm=TRUE)
-        res$maxMAF    <- max(MAF, na.rm=TRUE)
+        res <- list(meanMAF=NA, medianMAF=NA, minMAF=NA, maxMAF=NA,
+                    tableTypes=NULL)
 
-        cat("\tMean MAF:   ", res$meanMAF,   "\n")
-        cat("\tMedian MAF: ", res$medianMAF, "\n")
-        cat("\tMinimum MAF:", res$minMAF,    "\n")
-        cat("\tMaximum MAF:", res$maxMAF,    "\n")
-
-        if (length(mcols(object)$type) > 0)
+        if (length(object) > 0)
         {
-            res$tableTypes <- table(mcols(object)$type, useNA="no")
-            n <- sum(res$tableTypes)
+            MAF <- MAF(object)
 
-            if (n > 0)
+            res$meanMAF   <- mean(MAF, na.rm=TRUE)
+            res$medianMAF <- median(MAF, na.rm=TRUE)
+            res$minMAF    <- min(MAF, na.rm=TRUE)
+            res$maxMAF    <- max(MAF, na.rm=TRUE)
+
+            cat("\tMean MAF:   ", res$meanMAF,   "\n")
+            cat("\tMedian MAF: ", res$medianMAF, "\n")
+            cat("\tMinimum MAF:", res$minMAF,    "\n")
+            cat("\tMaximum MAF:", res$maxMAF,    "\n")
+
+            if (length(mcols(object)$type) > 0)
             {
-                w1 <- max(nchar(names(res$tableTypes)))
-                w2 <- ceiling(log10(max(res$tableTypes)))
+                res$tableTypes <- table(mcols(object)$type, useNA="no")
+                n <- sum(res$tableTypes)
 
-                labels <- format(paste0(names(res$tableTypes), ":"),
-                                 width=(w1 + 2))
-                absNo  <- format(res$tableTypes, justify="right", width=w2)
-                perc   <- format(res$tableTypes * 100 / n, digits=3)
+                if (n > 0)
+                {
+                    w1 <- max(nchar(names(res$tableTypes)))
+                    w2 <- ceiling(log10(max(res$tableTypes)))
 
-                cat("\n",
-                    paste("\t", labels, absNo, " (", perc, "%)",
-                          sep="",collapse="\n"), sep="", "\n")
+                    labels <- format(paste0(names(res$tableTypes), ":"),
+                                     width=(w1 + 2))
+                    absNo  <- format(res$tableTypes, justify="right", width=w2)
+                    perc   <- format(res$tableTypes * 100 / n, digits=3)
+
+                    cat("\n",
+                        paste("\t", labels, absNo, " (", perc, "%)",
+                              sep="",collapse="\n"), sep="", "\n")
+                }
+                else
+                    cat("\n\tonly NAs in metadata column 'type'\n")
             }
             else
-                cat("\n\tonly NAs in metadata column 'type'\n")
+                cat("\n\tno metadata column 'type' available\n")
         }
-        else
-            cat("\n\tno metadata column 'type' available\n")
-    }
 
-    invisible(res)
+        invisible(res)
+    }
+    else
+    {
+        object_class <- class(object)
+        object_len <- length(object)
+        object_mcols <- mcols(object, use.names = FALSE)
+        object_nmc <- if (is.null(object_mcols)) 0L else ncol(object_mcols)
+        paste0(object_class, " object with ", object_len, " ",
+               ifelse(object_len ==  1L, "range", "ranges"), " and ",
+               object_nmc, " metadata ",
+               ifelse(object_nmc == 1L, "column", "columns"))
+    }
 }
 
 setMethod("summary", signature(object="VariantInfo"), summary.VariantInfo)

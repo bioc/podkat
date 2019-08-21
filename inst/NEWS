@@ -1,6 +1,50 @@
 Change history of package podkat:
 =================================
 
+Version 1.17.1:
+- changed summary() method for VariantAnnotation class in order to stay
+  compatible with print() method in GenomicRanges package
+- corresponding minor adaptations in documentation and package vignette
+
+Version 1.17.0:
+- new branch for Bioconductor 3.10 devel
+
+Version 1.16.0:
+- release as part of Bioconductor 3.9
+
+Version 1.15.1:
+- changed Rsamtools API to Rhtslib API
+
+Version 1.15.0:
+- new branch for Bioconductor 3.9 devel
+
+Version 1.14.0:
+- release as part of Bioconductor 3.8
+
+Version 1.13.0:
+- new branch for Bioconductor 3.8 devel
+
+Version 1.12.0:
+- release as part of Bioconductor 3.7
+
+Version 1.11.0:
+- new branch for Bioconductor 3.7 devel
+
+Version 1.10.0:
+- release as part of Bioconductor 3.6
+
+Version 1.9.0:
+- new branch for Bioconductor 3.6 devel
+
+Version 1.8.0:
+- release as part of Bioconductor 3.5
+
+Version 1.7.0:
+- new branch for Bioconductor 3.5 devel
+
+Version 1.6.0:
+- release as part of Bioconductor 3.4
+
 Version 1.5.4:
 - fix in vignette code that became necessary because of a change in
   the hg38 transcript annotation

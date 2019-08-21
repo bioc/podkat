@@ -46,8 +46,11 @@
 \section{Methods}{
    \describe{
      \item{summary}{\code{signature(object="VariantInfo")}:
-       computes and prints a summary about the MAFs and variant types
-       (if available); this method returns a list with summarized values.}
+       returns a string with the number of variants and metadata columns
+       (if any); if the optional argument \code{details} is set to
+       \code{TRUE}, this method computes and prints a summary about the
+       MAFs and variant types (if available); this variant returns a
+       list with summarized values.}
    }
    All other methods, including sub-setting, are inherited from the
    \code{\linkS4class{GRanges}} class.
