@@ -1,6 +1,15 @@
 Change history of package podkat:
 =================================
 
+Version 1.18.0:
+- release as part of Bioconductor 3.10
+
+Version 1.17.3:
+- removed change history from package vignette for easier maintenance
+
+Version 1.17.2:
+- minor changes to DESCRIPTION file (system requirement GNU make) and src/Makevars
+
 Version 1.17.1:
 - changed summary() method for VariantAnnotation class in order to stay
   compatible with print() method in GenomicRanges package
