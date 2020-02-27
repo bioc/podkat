@@ -1,6 +1,12 @@
 Change history of package podkat:
 =================================
 
+Version 1.19.1:
+- fix in nullModel() method to ensure compatibility with R 4.0
+
+Version 1.19.0:
+- new branch for Bioconductor 3.11 devel
+
 Version 1.18.0:
 - release as part of Bioconductor 3.10
 

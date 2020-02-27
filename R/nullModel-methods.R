@@ -253,7 +253,7 @@ nullModel.formula <- function(X, y, data,
                                    out@model.matrix * out@variance)),
                    silent=TRUE)
 
-        if (class(res) == "try-error")
+        if (is(res, "try-error"))
             stop("covariates do not meet regularity conditions => ",
                  "possibly remove constant and/or linearly dependent columns",
                  call.=FALSE)
@@ -316,7 +316,7 @@ nullModel.formula <- function(X, y, data,
 
         res <- try(solve(crossprod(moMat)), silent=TRUE)
 
-        if (class(res) == "try-error")
+        if (is(res, "try-error"))
             stop("covariates do not meet regularity conditions => ",
                  "possibly remove constant and/or linearly dependent columns",
                  call.=FALSE)
