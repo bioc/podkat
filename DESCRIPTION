@@ -1,7 +1,7 @@
 Package: podkat
 Type: Package
 Title: Position-Dependent Kernel Association Test
-Version: 1.21.0
+Version: 1.21.1
 Date: 2020-02-27
 Author: Ulrich Bodenhofer
 Maintainer: Ulrich Bodenhofer <bodenhofer@bioinf.jku.at>
@@ -42,4 +42,3 @@ Collate: AllGenerics.R AllClasses.R inputChecks.R sort-methods.R
 biocViews: Genetics, WholeGenome, Annotation, VariantAnnotation,
         Sequencing, DataImport
 NeedsCompilation: yes
-Packaged: 2020-02-27 20:05:37 UTC; ulrich
