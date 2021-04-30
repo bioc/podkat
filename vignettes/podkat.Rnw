@@ -152,6 +152,7 @@ Assume that, for a given set of samples, we are given a trait vector (one entry
 for each sample), genotypes of all samples (in matrix format or as a VCF
 file\footnote{Variant Call Format; see
 \url{http://www.1000genomes.org/wiki/analysis/variant-call-format/vcf-variant-call-format-version-42}
+(last visited 2021-04-30)
 for a detailed specification of this file format}),
 and a matrix of covariates (if any). Then an association test using \PODKAT\
 consists of the following basic steps:
@@ -499,7 +500,7 @@ The two latter are basically the
 same regions as in \verb+hg18Unmasked+ and \verb+hg19Unmasked+, but with
 chromosomes named as in the genomes b36 and b37
 that are frequently used by the Genome Analysis Toolkit (GATK).%
-\footnote{\url{https://www.broadinstitute.org/gatk/}}
+\footnote{\url{https://www.broadinstitute.org/gatk/} (last visited 2021-04-30)}
 The five objects are available upon \verb+data()+ calls as in the following
 example:
 <<hg38UnmaskedCall>>=
@@ -672,49 +673,36 @@ sequencing. In this case, it makes little sense to use a partition of the
 whole genome as regions of interest. Instead, the best way is to use
 exactly those regions that have been targeted by the capturing technology.
 If these regions are available as a BED file%
-\footnote{\url{http://genome.ucsc.edu/FAQ/FAQformat.html\#format1}}, this
+\footnote{\url{https://genome.ucsc.edu/FAQ/FAQformat.html\#format1} (last visited 2021-04-30)}, this
 file can be read with the function \verb+readRegionsFromBedFile()+.
 In the following example, we demonstrate this for a BED file that specifies
-the regions targeted by the Illumina\RTM{} TruSeq Exome Enrichment Kit.
+the regions targeted by the Illumina\RTM{} TruSeq DNA Exome Kit.
 The regions are based on the hg19 human genome build.
 In order to make this code example work, users must first download the file
 from the Illumina\RTM{} website%
-\footnote{\url{http://support.illumina.com/downloads/truseq_exome_targeted_regions_bed_file.ilmn}}:
+\footnote{\url{https://emea.support.illumina.com/downloads/truseq-exome-product-files.html} (last visited: 2021-04-30)}:
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlkwd{readRegionsFromBedFile}\hlstd{(}\hlstr{"truseq_exome_targeted_regions.hg19.bed.chr.gz"}\hlstd{)}
+\hlkwd{readRegionsFromBedFile}\hlstd{(}\hlstr{"truseq-exome-targeted-regions-manifest-v1-2.bed"}\hlstd{)}
 \end{alltt}
 \begin{verbatim}
-##!!## GRanges object with 201071 ranges and 0 metadata columns:
-##!!##                                  seqnames               ranges
-##!!##                                     <Rle>            <IRanges>
-##!!##          chr1:14363-14829:WASH5P     chr1       [14362, 14829]
-##!!##          chr1:14970-15038:WASH5P     chr1       [14969, 15038]
-##!!##          chr1:15796-15947:WASH5P     chr1       [15795, 15947]
-##!!##          chr1:16607-16765:WASH5P     chr1       [16606, 16765]
-##!!##          chr1:16858-17055:WASH5P     chr1       [16857, 17055]
-##!!##                              ...      ...                  ...
-##!!##   chrY:24457542-24457645:RBMY2FP     chrY [24457541, 24457645]
-##!!##   chrY:24460640-24462350:RBMY2FP     chrY [24460639, 24462350]
-##!!##    chrY:24549623-24549729:RBMY1J     chrY [24549622, 24549729]
-##!!##      chrY:26980008-26980063:DAZ2     chrY [26980007, 26980063]
-##!!##      chrY:26980089-26980276:DAZ3     chrY [26980088, 26980276]
-##!!##                                  strand
-##!!##                                   <Rle>
-##!!##          chr1:14363-14829:WASH5P      +
-##!!##          chr1:14970-15038:WASH5P      +
-##!!##          chr1:15796-15947:WASH5P      +
-##!!##          chr1:16607-16765:WASH5P      +
-##!!##          chr1:16858-17055:WASH5P      +
-##!!##                              ...    ...
-##!!##   chrY:24457542-24457645:RBMY2FP      +
-##!!##   chrY:24460640-24462350:RBMY2FP      +
-##!!##    chrY:24549623-24549729:RBMY1J      +
-##!!##      chrY:26980008-26980063:DAZ2      +
-##!!##      chrY:26980089-26980276:DAZ3      +
-##!!##   -------
-##!!##   seqinfo: 24 sequences from an unspecified genome; no seqlengths
+##!!## GRanges object with 214126 ranges and 0 metadata columns:
+##!!#                              seqnames            ranges strand
+##!!##                                <Rle>         <IRanges>  <Rle>
+##!!##        CEX-chr1-12099-12258     chr1       12098-12258      *
+##!!##        CEX-chr1-12554-12721     chr1       12553-12721      *
+##!!##        CEX-chr1-13332-13701     chr1       13331-13701      *
+##!!##        CEX-chr1-30335-30503     chr1       30334-30503      *
+##!!##        CEX-chr1-35046-35544     chr1       35045-35544      *
+##!!##                         ...      ...               ...    ...
+##!!##  CEX-chrY-59355682-59355884     chrY 59355681-59355884      *
+##!!##  CEX-chrY-59355972-59356131     chrY 59355971-59356131      *
+##!!##  CEX-chrY-59356790-59356943     chrY 59356789-59356943      *
+##!!##  CEX-chrY-59357687-59357786     chrY 59357686-59357786      *
+##!!##  CEX-chrY-59357911-59358045     chrY 59357910-59358045      *
+##!!##  -------
+##!!##  seqinfo: 25 sequences from an unspecified genome; no seqlengths
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -729,7 +717,7 @@ as \verb+seqInfo+ argument:
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
 \hlkwd{data}\hlstd{(hg19Unmasked)}
-\hlstd{reg} \hlkwb{<-} \hlkwd{readRegionsFromBedFile}\hlstd{(}\hlstr{"truseq_exome_targeted_regions.hg19.bed.chr.gz"}\hlstd{,}
+\hlstd{reg} \hlkwb{<-} \hlkwd{readRegionsFromBedFile}\hlstd{(}\hlstr{"truseq-exome-targeted-regions-manifest-v1-2.bed"}\hlstd{,}
                               \hlkwc{seqInfo}\hlstd{=}\hlkwd{seqinfo}\hlstd{(hg19Unmasked))}
 \hlkwd{seqinfo}\hlstd{(reg)}
 \end{alltt}
@@ -806,7 +794,7 @@ In such a case, there are multiple options to define regions of interest.
 The simplest, but also most tedious, approach is to enter the regions
 manually. Let us consider the simple example that we are interested
 in the two human hemoglobin alpha genes HBA1 and HBA2. If we search for
-these genes in the UCSC Genome Browser\footnote{\url{http://genome.ucsc.edu/}}
+these genes in the UCSC Genome Browser\footnote{\url{http://genome.ucsc.edu/} (last visited 2021-04-30)}
 \cite{KentSugnetFureyRoskinPringleZahlerHaussler02}, we see that the genes
 are in the following regions (according to the hg38 human genome build):
 <<HBAGenesManual>>=
@@ -932,7 +920,7 @@ summary(MAF(geno))
 @
 Moreover, there is a custom variant of the \verb+summary()+ method:
 <<vInfoSummary>>=
-summary(geno, details=TRUE)
+summary(variantInfo(geno), details=TRUE)
 @
 
 The simplest approach is to perform a test for
@@ -1276,7 +1264,7 @@ entity.
 The main file format for storing variant calls, no matter whether they
 have been determined by microarrays or next-generation sequencing, is the
 {\em Variant Call Format (VCF)}.%
-\footnote{\url{http://www.1000genomes.org/wiki/analysis/variant-call-format/vcf-variant-call-format-version-42}}
+\footnote{\url{http://www.1000genomes.org/wiki/analysis/variant-call-format/vcf-variant-call-format-version-42} (last visited 2021-04-30)}
 Not surprisingly, this is the main file format that is used and supported by
 \PODKAT. However, in order to make VCF files suitable as input files for
 \PODKAT, some preparations may be necessary. Most importantly,
@@ -1291,17 +1279,17 @@ available on the computer system on which the VCF preprocessing steps are
 to be performed. If they are not yet available, the latest version of
 \verb+tabix+ \cite{LiHandsakerWysokerFennellRuanHomerMarth09} must be
 downloaded,%
-\footnote{\url{http://sourceforge.net/projects/samtools/files/tabix/}}
+\footnote{\url{http://sourceforge.net/projects/samtools/files/tabix/} (last visited 2021-04-30)}
 compiled, and installed. This package also includes \verb+bgzip+, so no
 extra effort is necessary to install \verb+bgzip+. Make sure
 that the executables \verb+tabix+ and \verb+bgzip+ are in the default
 search path.
 
 For merging and concatentating VCF files, either install the
-Perl-based VCFtools\footnote{\url{http://vcftools.sourceforge.net/}}
+Perl-based VCFtools\footnote{\url{https://vcftools.github.io/index.html} (last visited 2021-04-30)}
 \cite{DanecekAutonAbecasisAlbersBanksDePristoHandsaker11}
 or the faster bcftools/htslib VCF commands.%
-\footnote{\url{http://vcftools.sourceforge.net/htslib.html}}
+\footnote{\url{https://vcftools.github.io/htslib.html} (last visited 2021-04-30)}
 Make sure that the necessary executables are in the default search path.
 
 All examples below are supposed to run on Unix-like systems (including
@@ -1460,7 +1448,7 @@ unknown/other).
 \subsection{Using Genotypes from Other Data Sources}\label{ssec:otherSource}
 
 The Variant Call Format%
-\footnote{\url{http://www.1000genomes.org/wiki/analysis/variant-call-format/vcf-variant-call-format-version-42}}
+\footnote{\url{http://www.1000genomes.org/wiki/analysis/variant-call-format/vcf-variant-call-format-version-42} (last visited 2021-04-30)}
 (VCF) is the primary file format supported by the \PODKAT\ package.
 If a user has genotype data in another format, there are basically two ways
 of using such data:
@@ -1560,7 +1548,7 @@ components.
 Small or moderately sized association tests like the examples presented
 above can be performed within seconds on a regular desktop computer.
 Large whole-genome studies, for example, the two whole-genome cohorts
-from the UK10K project\footnote{\url{http://www.uk10k.org/studies/cohorts.html}}
+from the UK10K project\footnote{\url{http://www.uk10k.org/studies/cohorts.html} (last visited 2021-04-30)}
 comprise thousands of samples and tens of millions of variants, and the
 compressed VCF files amount to hundreds of gigabytes. In order to analyze such
 vast amounts of data, \PODKAT\ implements two complementary
