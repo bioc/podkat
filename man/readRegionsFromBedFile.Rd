@@ -7,8 +7,7 @@
 \usage{
 readRegionsFromBedFile(file, header=FALSE, sep="\t",
                        col.names=c("chrom", "chromStart",
-                                   "chromEnd", "names", "width",
-                                   "strand"),
+                                   "chromEnd", "names"),
                        ignoreMcols=TRUE, seqInfo=NULL)
 }
 \arguments{
@@ -43,6 +42,10 @@ readRegionsFromBedFile(file, header=FALSE, sep="\t",
   \dQuote{names}, \dQuote{strand}, and \dQuote{width} are appended
   to the resulting \code{\linkS4class{GRanges}} object as metadata
   columns.
+
+  Note that the default for \code{col.names} has changed in version
+  1.23.2 of the package. Starting with this version, the BED is no
+  longer assumed to contain strand and width information.
 
   The \code{seqInfo} argument can be used to assign the right metadata,
   such as, genome, chromosome names, and chromosome lengths

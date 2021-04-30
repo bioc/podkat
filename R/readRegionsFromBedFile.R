@@ -1,7 +1,6 @@
 readRegionsFromBedFile <- function(file, header=FALSE, sep="\t",
                                    col.names=c("chrom", "chromStart",
-                                               "chromEnd", "names", "width",
-                                               "strand"),
+                                               "chromEnd", "names"),
                                    ignoreMcols=TRUE, seqInfo=NULL)
 {
     df <- read.table(file=file, header=header, sep=sep,
