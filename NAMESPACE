@@ -9,9 +9,9 @@ importFrom(graphics, plot, abline, axTicks, axis, box, mtext,
            par, points, segments, text)
 importFrom(grDevices, col2rgb, rainbow, rgb)
 importFrom(utils, read.table)
-importFrom(parallel, makePSOCKcluster, stopCluster)
-importFrom(BiocGenerics, unlist, clusterApplyLB, clusterEvalQ,
-           clusterExport, weights, clusterCall, path)
+importFrom(parallel, makePSOCKcluster, stopCluster, clusterApplyLB, clusterEvalQ,
+           clusterExport, clusterCall)
+importFrom(BiocGenerics, unlist, weights, path)
 import(Biobase)
 import(Rsamtools)
 import(Matrix)

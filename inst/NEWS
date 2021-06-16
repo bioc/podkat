@@ -1,6 +1,12 @@
 Change history of package podkat:
 =================================
 
+Version 1.25.1:
+- adjusted NAMESPACE to account for changes in BiocGenerics package
+
+Version 1.25.0:
+- new branch for Bioconductor 3.14 devel
+
 Version 1.24.0:
 - release as part of Bioconductor 3.13
 
