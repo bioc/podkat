@@ -1,8 +1,8 @@
 Package: podkat
 Type: Package
 Title: Position-Dependent Kernel Association Test
-Version: 1.27.0
-Date: 2021-06-16
+Version: 1.27.1
+Date: 2021-11-21
 Author: Ulrich Bodenhofer
 Maintainer: Ulrich Bodenhofer <bodenhofer@bioinf.jku.at>
 Description: This package provides an association test that is capable
