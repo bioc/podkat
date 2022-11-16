@@ -1,5 +1,6 @@
 qqplot.vector <- function(x, y, xlab="", ylab="", xlim=NA, ylim=NA,
-                          common.scale=TRUE,lwd=1, lcol="red", ...)
+                          common.scale=TRUE, lwd=1, lcol="red", ...,
+                          conf.level=NULL, conf.args=NULL)
 {
     if (missing(y))
     {
@@ -46,7 +47,8 @@ qqplot.AssocTestResultRanges <- function(x, y, xlab=deparse(substitute(x)),
                                          ylab=deparse(substitute(y)),
                                          common.scale=TRUE,
                                          preserveLabels=FALSE,
-                                         lwd=1, lcol="red", ...)
+                                         lwd=1, lcol="red", ...,
+                                         conf.level=NULL, conf.args=NULL)
 {
     if (missing(y))
     {

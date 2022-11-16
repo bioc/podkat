@@ -24,3 +24,5 @@ setGeneric("readVariantInfo", function(file, regions, ...)
 
 setGeneric("filterResult", function(object, ...)
            standardGeneric("filterResult"))
+
+setGeneric("qqplot")

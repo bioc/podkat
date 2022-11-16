@@ -63,16 +63,16 @@
   In the following code snippets, \code{x} is a
   \code{\linkS4class{GenotypeMatrix}} object.
   \describe{
-    \item{}{\code{x[i, ]}: returns a
+    \item{\code{x[i, ]}}{returns a
       \code{\linkS4class{GenotypeMatrix}} object that only
       contains the samples selected by the index vector \code{i}
     }
-    \item{}{\code{x[, j]}: returns a
+    \item{\code{x[, j]}}{returns a
       \code{\linkS4class{GenotypeMatrix}}
       object that only contains the variants selected by the index
       vector \code{j}
     }
-    \item{}{\code{x[i, j]}: returns a
+    \item{\code{x[i, j]}}{returns a
       \code{\linkS4class{GenotypeMatrix}}
       object that only contains the samples selected by the index vector
       \code{i} and the variants selected by the index vector \code{j}

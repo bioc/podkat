@@ -13,11 +13,11 @@
 \S4method{qqplot}{AssocTestResultRanges,missing}(x, y,
        xlab=deparse(substitute(x)), ylab=deparse(substitute(y)),
        common.scale=TRUE, preserveLabels=FALSE, lwd=1,
-       lcol="red", ...)
+       lcol="red", ..., conf.level=NULL, conf.args=NULL)
 \S4method{qqplot}{AssocTestResultRanges,AssocTestResultRanges}(x, y,
        xlab=deparse(substitute(x)), ylab=deparse(substitute(y)),
        common.scale=TRUE, preserveLabels=FALSE, lwd=1,
-       lcol="red", ...)
+       lcol="red", ..., conf.level=NULL, conf.args=NULL)
 }
 \arguments{
   \item{x,y}{objects of class
@@ -46,6 +46,10 @@
     corresponds to the equality of the two distributions; if zero, no
     diagonal line is drawn.}
   \item{lcol}{color for drawing the diagonal line}
+  \item{conf.level}{dummy argument for compatibility with the new
+    version of the function in the \pkg{stats} package; currently unused}
+  \item{conf.args}{dummy argument for compatibility with the new
+    version of the function in the \pkg{stats} package; currently unused}
   \item{...}{all other arguments are passed to
     \code{\link[graphics:plot]{plot}};}
 }
