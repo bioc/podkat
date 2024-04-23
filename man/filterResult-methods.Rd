@@ -56,8 +56,8 @@
   \code{\linkS4class{GRanges}}, or \code{\linkS4class{GRangesList}} (see
   details above)
 }
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}}
 \seealso{\code{\linkS4class{AssocTestResultRanges}},
   \code{\link[podkat:p.adjust]{p.adjust}}}
 \examples{

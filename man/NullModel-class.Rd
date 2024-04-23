@@ -96,8 +96,8 @@ The following slots are defined for \code{NullModel} objects:
   null model was trained/created.
 }
 
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}}
 \seealso{\code{\link{nullModel}}}
 \examples{
 ## read phenotype data from CSV file (continuous trait + covariates)

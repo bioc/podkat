@@ -12,8 +12,8 @@
   \code{\linkS4class{GRanges}} object \code{hgA} provides a description
   of this artificial genome that can be used for further processing,
   e.g. by the \code{\link{partitionRegions}} function.}
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}}
 \seealso{\code{\linkS4class{GRanges}}, \code{\link{partitionRegions}}}
 \examples{
 ## load data set

@@ -81,8 +81,8 @@
   the \pkg{stats} package, \code{qqplot} returns an invisible list
   containing the two sorted vectors of p-values.
 }
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}}
 \seealso{\code{\linkS4class{AssocTestResultRanges}}}
 \examples{
 ## load genome description

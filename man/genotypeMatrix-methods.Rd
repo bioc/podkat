@@ -173,15 +173,15 @@
 \value{returns an object of class \code{\linkS4class{GenotypeMatrix}}
 }
 
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}
-
-\url{http://www.1000genomes.org/wiki/analysis/variant-call-format/vcf-variant-call-format-version-42}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}
+  
+\url{https://github.com/samtools/hts-specs}
 
 Obenchain, V., Lawrence, M., Carey, V., Gogarten, S., Shannon, P., and
 Morgan, M. (2014) VariantAnnotation: a Bioconductor package for
 exploration and annotation of genetic variants. \emph{Bioinformatics}
-\bold{30}, 2076-2078.
+\bold{30}, 2076-2078. DOI: \doi{10.1093/bioinformatics/btu168}.
 }
 \seealso{\code{\linkS4class{GenotypeMatrix}}, 
   \code{\linkS4class{dgCMatrix}}, \code{\linkS4class{GRanges}}

@@ -206,8 +206,8 @@
 \value{
   returns a \code{\linkS4class{NullModel}} object
 }
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}
 
 Lee, S., Emond, M. J., Bamshad, M. J., Barnes, K. C., Rieder, M. J.,
 Nickerson, D. A., NHLBI Exome Sequencing Project - ESP Lung Project
@@ -215,7 +215,7 @@ Team, Christiani, D. C., Wurfel, M. M., and Lin, X. (2012)
 Optimal unified approach for rare-variant association testing with
 application to small-sample case-control whole-exome sequencing studies.
 \emph{Am. J. Hum. Genet.} \bold{91}, 224-237. DOI:
-\href{http://dx.doi.org/10.1016/j.ajhg.2012.06.007}{10.1016/j.ajhg.2012.06.007}.
+\doi{10.1016/j.ajhg.2012.06.007}.
 }
 \seealso{\code{\linkS4class{NullModel}}, \code{\link[stats]{lm}},
   \code{\link[stats]{glm}}}

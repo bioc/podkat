@@ -50,19 +50,18 @@ invSdWeights(x)
   a numeric vector with weights as long as the argument \code{x},
   a function if \code{x} was missing;
 }
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}
 
 Wu, M. C., Lee, S., Cai, T., Li, Y., Boehnke, M., and Lin, X. (2011)
 Rare-variant association testing for sequencing data with the sequence
 kernel association test. \emph{Am. J. Hum. Genet.} \bold{89}, 82-93.
-DOI:
-\href{http://dx.doi.org/10.1016/j.ajhg.2011.05.029}{10.1016/j.ajhg.2011.05.029}.
+DOI: \doi{10.1016/j.ajhg.2011.05.029}.
 
 Madsen, B. E. and Browning, S. R. (2009)
 A groupwise association test for rare mutations using a weighted
 sum statistic. \emph{PLoS Genetics} \bold{5}, e1000384.
-\href{http://dx.doi.org/10.1371/journal.pgen.1000384}{10.1371/journal.pgen.1000384}}
+DOI: \doi{10.1371/journal.pgen.1000384}}
 \seealso{\code{\linkS4class{GenotypeMatrix}}, \code{\link{dbeta}},
 \code{\link{assocTest}}}
 \examples{

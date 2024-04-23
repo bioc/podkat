@@ -1,10 +1,10 @@
 Package: podkat
 Type: Package
 Title: Position-Dependent Kernel Association Test
-Version: 1.35.0
-Date: 2022-11-16
-Author: Ulrich Bodenhofer
-Maintainer: Ulrich Bodenhofer <bodenhofer@bioinf.jku.at>
+Version: 1.35.1
+Date: 2024-04-23
+Author: Ulrich Bodenhofer [aut,cre]
+Maintainer: Ulrich Bodenhofer <ulrich@bodenhofer.com>
 Description: This package provides an association test that is capable
         of dealing with very rare and even private variants. This is
         accomplished by a kernel-based approach that takes the
@@ -14,8 +14,7 @@ Description: This package provides an association test that is capable
         whole-genome, whole-exome, or restricted to pre-defined regions
         of interest. The test is complemented by tools for analyzing
         and visualizing the results.
-URL: http://www.bioinf.jku.at/software/podkat/
-        https://github.com/UBod/podkat
+URL: https://github.com/UBod/podkat
 License: GPL (>= 2)
 Depends: R (>= 3.5.0), methods, Rsamtools (>= 1.99.1), GenomicRanges
 Imports: Rcpp (>= 0.11.1), parallel, stats (>= 4.3.0), graphics, grDevices, utils,

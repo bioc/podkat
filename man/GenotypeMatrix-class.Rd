@@ -92,8 +92,8 @@
   be controlled by the optional \code{ploidy} argument (the default is 2).
 }
 
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}}
 \seealso{\code{\linkS4class{dgCMatrix}}, \code{\linkS4class{VariantInfo}},
 \code{\link{genotypeMatrix}}, \code{\link{readGenotypeMatrix}}}
 \examples{

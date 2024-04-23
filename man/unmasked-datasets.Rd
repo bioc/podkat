@@ -34,8 +34,8 @@ b37Unmasked}
   undesired, the user can re-unite the pseudoautosomal regions with
   their chromosomes as shown in the example section below or run
   \code{\link{unmaskedRegions}} him- or herself to extract unmasked regions.}
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}}
 \seealso{\code{\link{unmaskedRegions}}, \code{\linkS4class{GRangesList}},
   \code{\linkS4class{GRanges}},
   \code{\link[GWASTools]{pseudoautosomal}}}

@@ -60,8 +60,8 @@
 \value{
   \code{print} returns its argument \code{x} invisibly.
 }
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}}
 \seealso{\code{\linkS4class{GenotypeMatrix}},
   \code{\linkS4class{NullModel}}, \code{\linkS4class{AssocTestResult}},
   \code{\link{AssocTestResultRanges}}

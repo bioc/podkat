@@ -54,8 +54,8 @@ readRegionsFromBedFile(file, header=FALSE, sep="\t",
 \value{
   a \code{\linkS4class{GRanges}} object
 }
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}
 
 \url{http://genome.ucsc.edu/FAQ/FAQformat.html#format1}
 }

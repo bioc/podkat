@@ -86,15 +86,16 @@
 \value{returns an object of class \code{\linkS4class{GenotypeMatrix}}
 }
 
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}
 
-\url{http://www.1000genomes.org/wiki/analysis/variant-call-format/vcf-variant-call-format-version-42}
+\url{https://github.com/samtools/hts-specs}
 
 Li, H., Handsaker, B., Wysoker, A., Fenell, T., Ruan, J., Homer, N.,
 Marth, G., Abecasis, G., Durbin, R., and 1000 Genome Project Data
 Processing Subgroup (2009) The Sequence Alignment/Map format and
 SAMtools. \emph{Bioinformatics} \bold{25}, 2078-2079.
+DOI: \doi{10.1093/bioinformatics/btp352}.
 }
 \seealso{\code{\linkS4class{GenotypeMatrix}}}
 \examples{

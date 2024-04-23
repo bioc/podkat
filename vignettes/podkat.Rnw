@@ -1,4 +1,4 @@
-\documentclass[article]{bioinf}
+\documentclass{ubmanual}
 
 \usepackage{bm}
 \usepackage{amsmath,amssymb,amsfonts}
@@ -13,10 +13,12 @@
 
 \title{{\Huge PODKAT}\\[5mm]
    An R Package for Association Testing Involving Rare and Private Variants}
-\author{Ulrich Bodenhofer}
-\affiliation{Institute of Bioinformatics, Johannes Kepler University
-Linz\\Altenberger Str. 69, 4040 Linz, Austria\\
-\email{podkat@bioinf.jku.at}}
+\author{Ulrich Bodenhofer\affilmark{1,2}}
+\affiliation{\affilmark{1} School of Informatics, Communication and Media\\
+University of Applied Sciences Upper Austria\\
+Softwarepark 11, 4232 Hagenberg, Austria\\[2mm]
+{\grey\affilmark{2} previously with: Institute of Bioinformatics,
+Johannes Kepler University\\Altenberger Str.\ 69, 4040 Linz, Austria}}
 
 \newcommand{\PODKAT}{PODKAT}
 \newcommand{\SKAT}{SKAT}
@@ -33,8 +35,12 @@ Linz\\Altenberger Str. 69, 4040 Linz, Austria\\
 \newcommand{\Natural}{\mathbb{N}}
 \newcommand{\MAF}{\mathrm{MAF}}
 
-\newcommand{\gO}{\cellcolor{bioli}1}
-\newcommand{\gF}{\cellcolor{bioli}4}
+\author{Ulrich Bodenhofer\affilmark{1,2}}
+
+\definecolor{ubye}{rgb}{1.00,0.83,0.16}
+
+\newcommand{\gO}{\cellcolor{ubye}1}
+\newcommand{\gF}{\cellcolor{ubye}4}
 
 \DeclareFontShape{OT1}{cmtt}{bx}{n}%
 {<5><6><7><8><9><10><10.95><12><14.4><17.28><20.74><24.88>cmttb10}{}
@@ -73,7 +79,7 @@ podkatDate <- paste(month.name[podkatDateMonth], " ",
 \newcommand{\PODKATVer}{\Sexpr{podkatVersion}}
 \newcommand{\PODKATDate}{\Sexpr{podkatDate}}
 \newcommand{\PODKATYear}{\Sexpr{podkatDateYear}}
-\manualtitlepage[Version \PODKATVer, \PODKATDate]
+\manualtitlepage{Version \PODKATVer, \PODKATDate}{https://github.com/UBod/podkat}
 
 \section*{Scope and Purpose of this Document}
 

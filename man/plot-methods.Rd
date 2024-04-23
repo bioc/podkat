@@ -194,8 +194,8 @@
   returns an invisible numeric vector of length 2 containing the
   y axis limits
 }
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}}
 \seealso{\code{\linkS4class{AssocTestResultRanges}},
   \code{\linkS4class{GRanges}}}
 \examples{

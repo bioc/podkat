@@ -39,8 +39,8 @@
 \value{
   a \code{\linkS4class{GRangesList}} object (see details above)
 }
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}}
 \seealso{\code{\linkS4class{GRanges}}, \code{\linkS4class{GRangesList}}}
 \examples{
 ## set up toy example

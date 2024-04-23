@@ -298,14 +298,14 @@
   an object of class \code{\linkS4class{AssocTestResult}} or
   \code{\linkS4class{AssocTestResultRanges}} (see details above)
 }
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}
 
 Wu, M. C., Lee, S., Cai, T., Li, Y., Boehnke, M., and Lin, X. (2011)
 Rare-variant association testing for sequencing data with the sequence
 kernel association test. \emph{Am. J. Hum. Genet.} \bold{89}, 82-93.
 DOI:
-\href{http://dx.doi.org/10.1016/j.ajhg.2011.05.029}{10.1016/j.ajhg.2011.05.029}.
+\doi{10.1016/j.ajhg.2011.05.029}.
 
 Lee, S., Emond, M. J., Bamshad, M. J., Barnes, K. C., Rieder, M. J.,
 Nickerson, D. A., NHLBI Exome Sequencing Project - ESP Lung Project
@@ -313,7 +313,7 @@ Team, Christiani, D. C., Wurfel, M. M., and Lin, X. (2012)
 Optimal unified approach for rare-variant association testing with
 application to small-sample case-control whole-exome sequencing studies.
 \emph{Am. J. Hum. Genet.} \bold{91}, 224-237. DOI:
-\href{http://dx.doi.org/10.1016/j.ajhg.2012.06.007}{10.1016/j.ajhg.2012.06.007}.
+\doi{10.1016/j.ajhg.2012.06.007}.
 
 Davies, R. B. (1980) The distribution of a linear combination of
 \eqn{\chi^2}{chi^2} random

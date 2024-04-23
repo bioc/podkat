@@ -53,8 +53,8 @@ The following slots are defined for \code{AssocTestResult} objects:
   }
 }
 
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}}
 \seealso{\code{\link{assocTest}}}
 \examples{
 ## load genome description

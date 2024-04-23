@@ -33,8 +33,8 @@
 \value{
   an \code{\linkS4class{AssocTestResultRanges}} object;
 }
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}}
 \seealso{\code{\linkS4class{AssocTestResultRanges}}}
 \examples{
 ## load genome description

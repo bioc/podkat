@@ -56,8 +56,8 @@
    \code{\linkS4class{GRanges}} class.
 }
 
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}}
 \seealso{\code{\linkS4class{GRanges}}, \code{\link{readVariantInfo}}, 
 \code{\link{genotypeMatrix}}, \code{\link{readGenotypeMatrix}}}
 \examples{

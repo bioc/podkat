@@ -60,8 +60,8 @@
   also returns a \code{\linkS4class{GRanges}} object. In the other two
   cases, a \code{\linkS4class{GRangesList}} object is returned.
 }
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}}
 \seealso{\code{\link{assocTest}}, \code{\link{unmaskedRegions}},
   \code{\link{unmasked-datasets}}, \code{\linkS4class{GRangesList}},
   \code{\linkS4class{GRanges}}}

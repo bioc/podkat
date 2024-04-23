@@ -67,13 +67,13 @@ computeKernel(Z, kernel=c("linear.podkat", "quadratic.podkat",
   a positive semi-definite kernel matrix with as many rows and
   columns as \code{Z} has rows
 }
-\author{Ulrich Bodenhofer \email{bodenhofer@bioinf.jku.at}}
-\references{\url{http://www.bioinf.jku.at/software/podkat}
+\author{Ulrich Bodenhofer}
+\references{\url{https://github.com/UBod/podkat}
 
 Wu, M. C., Lee, S., Cai, T., Li, Y., Boehnke, M., and Lin, X. (2011)
 Rare-variant association testing for sequencing data with the sequence
 kernel association test. \emph{Am. J. Hum. Genet.} \bold{89}, 82-93.
-DOI: \href{http://dx.doi.org/10.1016/j.ajhg.2011.05.029}{10.1016/j.ajhg.2011.05.029}.
+DOI: \doi{10.1016/j.ajhg.2011.05.029}.
 }
 \seealso{\code{\linkS4class{GenotypeMatrix}}}
 \examples{

@@ -49,6 +49,7 @@ extern "C"
     {
         /* register routines, allocate resources */
         R_registerRoutines(info, NULL, callMethods, NULL, NULL);
+	R_useDynamicSymbols(info, FALSE);
     }
 
     void R_unload_podkat(DllInfo *info)
