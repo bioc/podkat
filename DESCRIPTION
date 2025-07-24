@@ -1,8 +1,8 @@
 Package: podkat
 Type: Package
 Title: Position-Dependent Kernel Association Test
-Version: 1.41.0
-Date: 2024-04-23
+Version: 1.41.1
+Date: 2025-07-24
 Author: Ulrich Bodenhofer [aut,cre]
 Maintainer: Ulrich Bodenhofer <ulrich@bodenhofer.com>
 Description: This package provides an association test that is capable
@@ -18,7 +18,7 @@ URL: https://github.com/UBod/podkat
 License: GPL (>= 2)
 Depends: R (>= 3.5.0), methods, Rsamtools (>= 1.99.1), GenomicRanges
 Imports: Rcpp (>= 0.11.1), parallel, stats (>= 4.3.0), graphics, grDevices, utils,
-        Biobase, BiocGenerics, Matrix, GenomeInfoDb, IRanges,
+        Biobase, BiocGenerics, Matrix, Seqinfo, IRanges,
         Biostrings, BSgenome (>= 1.32.0)
 Suggests: BSgenome.Hsapiens.UCSC.hg38.masked,
         TxDb.Hsapiens.UCSC.hg38.knownGene,
