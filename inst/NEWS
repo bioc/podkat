@@ -1,6 +1,27 @@
 Change history of package podkat:
 =================================
 
+Version 1.41.1:
+- updated DESCRIPTION file to new format (Authors@R)
+
+Version 1.41.0:
+- new branch for Bioconductor 3.22 devel
+
+Version 1.40.0:
+- release as part of Bioconductor 3.21
+
+Version 1.39.0:
+- new branch for Bioconductor 3.21 devel
+
+Version 1.38.0:
+- release as part of Bioconductor 3.20
+
+Version 1.37.0:
+- new branch for Bioconductor 3.20 devel
+
+Version 1.36.0:
+- release as part of Bioconductor 3.19
+
 Version 1.35.1:
 - changed e-mail address of maintainer
 - updated README.md and formatting of package vignette
